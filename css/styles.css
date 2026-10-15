@@ -108,3 +108,11 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   padding: 8px 12px;
   margin: 6px 0;
 }
+.bodyweight-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.bodyweight-form input {
+  flex: 1;
+}
