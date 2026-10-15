@@ -13,6 +13,23 @@ export function renderLogView(container, existingSession, onDone) {
   dateInput.value = existingSession ? existingSession.date : todayIso();
   container.appendChild(dateInput);
 
+  const meta = document.createElement('div');
+  meta.className = 'session-meta';
+
+  const durationInput = document.createElement('input');
+  durationInput.type = 'number';
+  durationInput.placeholder = 'Duration (min)';
+  durationInput.value = existingSession && existingSession.durationMinutes != null ? existingSession.durationMinutes : '';
+  meta.appendChild(durationInput);
+
+  const caffeineInput = document.createElement('input');
+  caffeineInput.type = 'number';
+  caffeineInput.placeholder = 'Caffeine (mg)';
+  caffeineInput.value = existingSession && existingSession.caffeineMg != null ? existingSession.caffeineMg : '';
+  meta.appendChild(caffeineInput);
+
+  container.appendChild(meta);
+
   const datalist = document.createElement('datalist');
   datalist.id = 'exercise-names';
   Store.distinctExercises().forEach((ex) => {
@@ -115,10 +132,12 @@ export function renderLogView(container, existingSession, onDone) {
       return;
     }
     errorMsg.style.display = 'none';
+    const durationMinutes = durationInput.value ? Number(durationInput.value) : null;
+    const caffeineMg = caffeineInput.value ? Number(caffeineInput.value) : null;
     if (existingSession) {
-      Store.updateSession(existingSession.id, dateInput.value, entries);
+      Store.updateSession(existingSession.id, dateInput.value, entries, durationMinutes, caffeineMg);
     } else {
-      Store.addSession(dateInput.value, entries);
+      Store.addSession(dateInput.value, entries, durationMinutes, caffeineMg);
     }
     onDone();
   });

@@ -56,18 +56,20 @@ export function todayIso() {
 export const Store = {
   data: load(),
 
-  addSession(date, entries) {
-    const session = { id: genId('session'), date, entries };
+  addSession(date, entries, durationMinutes = null, caffeineMg = null) {
+    const session = { id: genId('session'), date, entries, durationMinutes, caffeineMg };
     this.data.sessions.push(session);
     save(this.data);
     return session;
   },
 
-  updateSession(id, date, entries) {
+  updateSession(id, date, entries, durationMinutes = null, caffeineMg = null) {
     const session = this.data.sessions.find((s) => s.id === id);
     if (!session) return;
     session.date = date;
     session.entries = entries;
+    session.durationMinutes = durationMinutes;
+    session.caffeineMg = caffeineMg;
     save(this.data);
   },
 
