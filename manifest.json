@@ -1,6 +1,6 @@
 {
-  "name": "HTPA Hello World",
-  "short_name": "HTPA Test",
+  "name": "HTPA Training Tracker",
+  "short_name": "HTPA",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
