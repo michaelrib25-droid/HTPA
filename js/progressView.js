@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+import { Store, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
 
 export function renderProgressView(container) {
@@ -29,7 +29,7 @@ export function renderProgressView(container) {
 
   function drawFor(key) {
     const points = Store.getProgressPoints(key).map((p) => ({
-      x: p.date,
+      x: formatDateDisplay(p.date),
       y: p.weight,
       tooltip: `${p.weight}kg × ${p.reps}`
     }));

@@ -1,4 +1,4 @@
-import { Store, todayIso } from './store.js';
+import { Store, todayIso, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
 
 export function renderBodyweightView(container) {
@@ -32,7 +32,7 @@ export function renderBodyweightView(container) {
   container.appendChild(form);
 
   const points = Store.getBodyweightPoints().map((p) => ({
-    x: p.date,
+    x: formatDateDisplay(p.date),
     y: p.weight,
     tooltip: `${p.weight}kg`
   }));
@@ -61,13 +61,13 @@ export function renderBodyweightView(container) {
       row.className = 'bodyweight-row';
 
       const label = document.createElement('span');
-      label.textContent = `${entry.date}: ${entry.weight}kg`;
+      label.textContent = `${formatDateDisplay(entry.date)}: ${entry.weight}kg`;
       row.appendChild(label);
 
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Delete';
       deleteBtn.addEventListener('click', () => {
-        if (!confirm(`Delete the bodyweight entry from ${entry.date} (${entry.weight}kg)?`)) return;
+        if (!confirm(`Delete the bodyweight entry from ${formatDateDisplay(entry.date)} (${entry.weight}kg)?`)) return;
         Store.removeBodyweight(entry.id);
         renderBodyweightView(container);
       });

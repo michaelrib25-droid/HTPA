@@ -115,6 +115,10 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
 }
 .bodyweight-form input {
   flex: 1;
+  min-width: 0;
+}
+.bodyweight-form button {
+  flex-shrink: 0;
 }
 .tab-nav {
   display: flex;

@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+import { Store, formatDateDisplay } from './store.js';
 
 export function renderRecordsView(container) {
   container.innerHTML = '';
@@ -17,7 +17,7 @@ export function renderRecordsView(container) {
   prs.forEach((pr) => {
     const row = document.createElement('p');
     row.className = 'record-row';
-    row.textContent = `${pr.label}: ${pr.weight}kg × ${pr.reps} (${pr.date})`;
+    row.textContent = `${pr.label}: ${pr.weight}kg × ${pr.reps} (${formatDateDisplay(pr.date)})`;
     container.appendChild(row);
   });
 }

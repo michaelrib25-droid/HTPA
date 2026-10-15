@@ -41,6 +41,10 @@ function bestSetInSets(sets) {
   }, null);
 }
 
+export function formatDateDisplay(iso) {
+  return iso.replace(/-/g, '.');
+}
+
 export function todayIso() {
   // Local calendar date, not toISOString()'s UTC date — otherwise a
   // late-night/early-morning entry can silently land on the wrong day
