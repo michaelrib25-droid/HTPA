@@ -98,3 +98,7 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   margin: 4px 0;
   font-size: 0.9rem;
 }
+.progress-view select {
+  margin-bottom: 12px;
+  width: 100%;
+}
