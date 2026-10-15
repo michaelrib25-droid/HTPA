@@ -1,0 +1,125 @@
+const STORAGE_KEY = 'htpa_training_v1';
+
+function defaultData() {
+  return { sessions: [], bodyweight: [] };
+}
+
+function genId(prefix) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeKey(name) {
+  return name.trim().toLowerCase();
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed.sessions) || !Array.isArray(parsed.bodyweight)) return defaultData();
+    return parsed;
+  } catch (e) {
+    return defaultData();
+  }
+}
+
+function save(data) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    // localStorage unavailable (e.g. private browsing) - data stays in memory only
+  }
+}
+
+function bestSetInSets(sets) {
+  return sets.reduce((best, s) => {
+    if (!best) return s;
+    if (s.weight > best.weight) return s;
+    if (s.weight === best.weight && s.reps > best.reps) return s;
+    return best;
+  }, null);
+}
+
+export const Store = {
+  data: load(),
+
+  addSession(date, entries) {
+    const session = { id: genId('session'), date, entries };
+    this.data.sessions.push(session);
+    save(this.data);
+    return session;
+  },
+
+  updateSession(id, date, entries) {
+    const session = this.data.sessions.find((s) => s.id === id);
+    if (!session) return;
+    session.date = date;
+    session.entries = entries;
+    save(this.data);
+  },
+
+  removeSession(id) {
+    this.data.sessions = this.data.sessions.filter((s) => s.id !== id);
+    save(this.data);
+  },
+
+  addBodyweight(date, weight) {
+    const entry = { id: genId('bw'), date, weight };
+    this.data.bodyweight.push(entry);
+    save(this.data);
+    return entry;
+  },
+
+  distinctExercises() {
+    const byKey = new Map(); // key -> { label, lastDate }
+    for (const session of this.data.sessions) {
+      for (const entry of session.entries) {
+        const key = normalizeKey(entry.exercise);
+        const existing = byKey.get(key);
+        if (!existing || session.date >= existing.lastDate) {
+          byKey.set(key, { label: entry.exercise.trim(), lastDate: session.date });
+        }
+      }
+    }
+    return [...byKey.entries()]
+      .map(([key, v]) => ({ key, label: v.label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  },
+
+  getProgressPoints(key) {
+    const points = [];
+    for (const session of this.data.sessions) {
+      const matchingSets = session.entries
+        .filter((e) => normalizeKey(e.exercise) === key)
+        .flatMap((e) => e.sets);
+      if (matchingSets.length === 0) continue;
+      const best = bestSetInSets(matchingSets);
+      points.push({ date: session.date, weight: best.weight, reps: best.reps });
+    }
+    return points.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  getAllPRs() {
+    const prs = new Map(); // key -> { label, weight, reps, date }
+    for (const session of this.data.sessions) {
+      for (const entry of session.entries) {
+        const key = normalizeKey(entry.exercise);
+        const best = bestSetInSets(entry.sets);
+        if (!best) continue;
+        const existing = prs.get(key);
+        if (!existing || best.weight > existing.weight ||
+            (best.weight === existing.weight && best.reps > existing.reps)) {
+          prs.set(key, { label: entry.exercise.trim(), weight: best.weight, reps: best.reps, date: session.date });
+        }
+      }
+    }
+    return [...prs.values()].sort((a, b) => a.label.localeCompare(b.label));
+  },
+
+  getBodyweightPoints() {
+    return this.data.bodyweight
+      .map((b) => ({ date: b.date, weight: b.weight }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+};
