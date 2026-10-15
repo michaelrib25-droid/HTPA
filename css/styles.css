@@ -48,3 +48,33 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   max-width: 400px;
   padding: 2px 4px;
 }
+.log-view, .history-view, .progress-view, .records-view, .bodyweight-view {
+  padding: 12px;
+  flex: 1;
+}
+.exercise-block {
+  background: #22223b;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.set-row {
+  display: flex;
+  gap: 6px;
+}
+.set-row input {
+  flex: 1;
+  min-width: 0;
+}
+.log-error {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+}
