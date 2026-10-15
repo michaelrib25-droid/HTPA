@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+import { Store, todayIso } from './store.js';
 import { renderLineChart } from './chart.js';
 
 export function renderBodyweightView(container) {
@@ -42,13 +42,38 @@ export function renderBodyweightView(container) {
     empty.className = 'empty-hint';
     empty.textContent = 'No bodyweight entries yet.';
     container.appendChild(empty);
-  } else {
-    const chartContainer = document.createElement('div');
-    container.appendChild(chartContainer);
-    renderLineChart(chartContainer, points);
+    return;
   }
-}
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  const chartContainer = document.createElement('div');
+  container.appendChild(chartContainer);
+  renderLineChart(chartContainer, points);
+
+  // A fat-fingered entry (e.g. 785 instead of 78.5) would otherwise be
+  // unrecoverable short of clearing all localStorage, which also wipes
+  // every workout session — so each entry needs its own delete affordance.
+  const list = document.createElement('div');
+  list.className = 'bodyweight-list';
+  [...Store.data.bodyweight]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'bodyweight-row';
+
+      const label = document.createElement('span');
+      label.textContent = `${entry.date}: ${entry.weight}kg`;
+      row.appendChild(label);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => {
+        if (!confirm(`Delete the bodyweight entry from ${entry.date} (${entry.weight}kg)?`)) return;
+        Store.removeBodyweight(entry.id);
+        renderBodyweightView(container);
+      });
+      row.appendChild(deleteBtn);
+
+      list.appendChild(row);
+    });
+  container.appendChild(list);
 }

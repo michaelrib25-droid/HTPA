@@ -1,4 +1,4 @@
-import { Store } from './store.js';
+import { Store, todayIso } from './store.js';
 
 export function renderLogView(container, existingSession, onDone) {
   container.innerHTML = '';
@@ -105,11 +105,16 @@ export function renderLogView(container, existingSession, onDone) {
   saveBtn.className = 'save-btn';
   saveBtn.textContent = 'Save';
   saveBtn.addEventListener('click', () => {
-    const entries = collectEntries(exerciseList);
+    const { entries, droppedBlocks, droppedSets } = collectEntries(exerciseList);
     if (entries.length === 0) {
       errorMsg.style.display = 'block';
       return;
     }
+    if ((droppedBlocks > 0 || droppedSets > 0) &&
+        !confirm(`Saving will skip ${droppedBlocks} incomplete exercise(s) and ${droppedSets} incomplete set(s). Continue?`)) {
+      return;
+    }
+    errorMsg.style.display = 'none';
     if (existingSession) {
       Store.updateSession(existingSession.id, dateInput.value, entries);
     } else {
@@ -122,13 +127,15 @@ export function renderLogView(container, existingSession, onDone) {
 
 function collectEntries(exerciseList) {
   const entries = [];
+  let droppedBlocks = 0;
+  let droppedSets = 0;
   exerciseList.querySelectorAll('.exercise-block').forEach((block) => {
     const name = block.querySelector('input[type="text"]').value.trim();
-    if (!name) return;
+    if (!name) { droppedBlocks++; return; }
     const sets = [];
     block.querySelectorAll('.set-row').forEach((row) => {
       const [weightInput, repsInput, rpeInput] = row.querySelectorAll('input');
-      if (!weightInput.value || !repsInput.value) return;
+      if (!weightInput.value || !repsInput.value) { droppedSets++; return; }
       sets.push({
         weight: Number(weightInput.value),
         reps: Number(repsInput.value),
@@ -136,10 +143,7 @@ function collectEntries(exerciseList) {
       });
     });
     if (sets.length > 0) entries.push({ exercise: name, sets });
+    else droppedBlocks++;
   });
-  return entries;
-}
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return { entries, droppedBlocks, droppedSets };
 }

@@ -41,6 +41,14 @@ function bestSetInSets(sets) {
   }, null);
 }
 
+export function todayIso() {
+  // Local calendar date, not toISOString()'s UTC date — otherwise a
+  // late-night/early-morning entry can silently land on the wrong day
+  // for any user not at UTC+0.
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export const Store = {
   data: load(),
 
@@ -69,6 +77,11 @@ export const Store = {
     this.data.bodyweight.push(entry);
     save(this.data);
     return entry;
+  },
+
+  removeBodyweight(id) {
+    this.data.bodyweight = this.data.bodyweight.filter((b) => b.id !== id);
+    save(this.data);
   },
 
   distinctExercises() {
@@ -101,7 +114,12 @@ export const Store = {
   },
 
   getAllPRs() {
-    const prs = new Map(); // key -> { label, weight, reps, date }
+    // Label comes from distinctExercises() (most-recently-typed casing),
+    // not from whichever entry happened to hold the winning set — otherwise
+    // the same exercise can render under two different casings between the
+    // Records tab and everywhere else (Progress picker, autocomplete).
+    const labelByKey = new Map(this.distinctExercises().map((e) => [e.key, e.label]));
+    const prs = new Map(); // key -> { weight, reps, date }
     for (const session of this.data.sessions) {
       for (const entry of session.entries) {
         const key = normalizeKey(entry.exercise);
@@ -110,11 +128,13 @@ export const Store = {
         const existing = prs.get(key);
         if (!existing || best.weight > existing.weight ||
             (best.weight === existing.weight && best.reps > existing.reps)) {
-          prs.set(key, { label: entry.exercise.trim(), weight: best.weight, reps: best.reps, date: session.date });
+          prs.set(key, { weight: best.weight, reps: best.reps, date: session.date });
         }
       }
     }
-    return [...prs.values()].sort((a, b) => a.label.localeCompare(b.label));
+    return [...prs.entries()]
+      .map(([key, v]) => ({ label: labelByKey.get(key), ...v }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   },
 
   getBodyweightPoints() {

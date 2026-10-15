@@ -41,12 +41,41 @@ export function renderLineChart(container, points) {
     circle.setAttribute('r', '4');
     circle.setAttribute('fill', '#4f6df5');
 
+    // <title> only shows on hover, which doesn't exist on a touchscreen —
+    // kept for desktop/mouse use, but the visible text labels below are
+    // what actually make the values readable on the target device (phone).
     const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
     title.textContent = points[i].tooltip;
     circle.appendChild(title);
 
     svg.appendChild(circle);
   });
+
+  if (range > 0) {
+    const maxLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    maxLabel.setAttribute('x', PADDING);
+    maxLabel.setAttribute('y', 12);
+    maxLabel.setAttribute('fill', '#a0a0b0');
+    maxLabel.setAttribute('font-size', '10');
+    maxLabel.textContent = String(maxVal);
+    svg.appendChild(maxLabel);
+
+    const minLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    minLabel.setAttribute('x', PADDING);
+    minLabel.setAttribute('y', HEIGHT - 6);
+    minLabel.setAttribute('fill', '#a0a0b0');
+    minLabel.setAttribute('font-size', '10');
+    minLabel.textContent = String(minVal);
+    svg.appendChild(minLabel);
+  } else {
+    const valueLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    valueLabel.setAttribute('x', PADDING);
+    valueLabel.setAttribute('y', 12);
+    valueLabel.setAttribute('fill', '#a0a0b0');
+    valueLabel.setAttribute('font-size', '10');
+    valueLabel.textContent = String(maxVal);
+    svg.appendChild(valueLabel);
+  }
 
   container.appendChild(svg);
 

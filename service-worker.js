@@ -1,4 +1,4 @@
-const CACHE_NAME = 'htpa-v20261015091124';
+const CACHE_NAME = 'htpa-v20261015092934';
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,14 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      // { cache: 'reload' } bypasses the browser's own HTTP cache for these
+      // fetches. Without it, a new CACHE_NAME installed within GitHub
+      // Pages' Cache-Control: max-age window (10 min) would precache
+      // whatever stale file bodies the HTTP cache already had — exactly
+      // the push-then-reopen-to-test loop this hook exists for.
+      cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })))
+    )
   );
   self.skipWaiting();
 });
