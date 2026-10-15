@@ -1,7 +1,7 @@
 {
   "id": "/HTPA/",
-  "name": "HTPA Training Tracker",
-  "short_name": "HTPA",
+  "name": "DTTA Training Tracker",
+  "short_name": "DTTA",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
