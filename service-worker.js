@@ -1,4 +1,4 @@
-const CACHE_NAME = 'htpa-v20261015104215';
+const CACHE_NAME = 'htpa-v20261015182751';
 const ASSETS = [
   './',
   './index.html',

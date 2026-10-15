@@ -32,9 +32,9 @@ export function renderBodyweightView(container) {
   container.appendChild(form);
 
   const points = Store.getBodyweightPoints().map((p) => ({
-    x: formatDateDisplay(p.date),
+    x: p.date.slice(5).replace('-', '.'),
     y: p.weight,
-    tooltip: `${p.weight}kg`
+    tooltip: `${formatDateDisplay(p.date)} — ${p.weight}kg`
   }));
 
   if (points.length === 0) {
@@ -49,7 +49,7 @@ export function renderBodyweightView(container) {
   container.appendChild(chartContainer);
   // Teal (the app's secondary accent) distinguishes this from the Progress
   // tab's blue lift charts — same chart component, different meaning.
-  renderLineChart(chartContainer, points, '#2dd4bf');
+  renderLineChart(chartContainer, points, { color: '#2dd4bf', unit: 'kg' });
 
   // A fat-fingered entry (e.g. 785 instead of 78.5) would otherwise be
   // unrecoverable short of clearing all localStorage, which also wipes

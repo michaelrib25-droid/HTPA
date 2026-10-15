@@ -40,15 +40,14 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   max-width: 400px;
   height: auto;
   background: #22223b;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
 }
-.trend-chart-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
+.chart-caption {
+  font-size: 0.8rem;
   color: #a0a0b0;
   max-width: 400px;
-  padding: 2px 4px;
+  margin: 4px 0 8px;
 }
 .log-view, .history-view, .progress-view, .records-view, .bodyweight-view {
   padding: 12px;
