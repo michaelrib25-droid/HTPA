@@ -2,7 +2,7 @@ const WIDTH = 320;
 const HEIGHT = 160;
 const PADDING = 24;
 
-export function renderLineChart(container, points) {
+export function renderLineChart(container, points, color = '#4f6df5') {
   container.innerHTML = '';
 
   const xStep = points.length > 1 ? (WIDTH - PADDING * 2) / (points.length - 1) : 0;
@@ -29,7 +29,7 @@ export function renderLineChart(container, points) {
     const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
     polyline.setAttribute('points', coords.map((c) => `${c.x},${c.y}`).join(' '));
     polyline.setAttribute('fill', 'none');
-    polyline.setAttribute('stroke', '#4f6df5');
+    polyline.setAttribute('stroke', color);
     polyline.setAttribute('stroke-width', '2');
     svg.appendChild(polyline);
   }
@@ -39,7 +39,7 @@ export function renderLineChart(container, points) {
     circle.setAttribute('cx', c.x);
     circle.setAttribute('cy', c.y);
     circle.setAttribute('r', '4');
-    circle.setAttribute('fill', '#4f6df5');
+    circle.setAttribute('fill', color);
 
     // <title> only shows on hover, which doesn't exist on a touchscreen —
     // kept for desktop/mouse use, but the visible text labels below are

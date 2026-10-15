@@ -34,15 +34,23 @@ export function renderHistoryView(container, callbacks) {
 
     const row = document.createElement('tr');
     row.className = 'history-row';
-    [
-      formatDateDisplay(session.date),
-      String(session.entries.length),
-      String(totalSets),
-      session.durationMinutes != null ? String(session.durationMinutes) : '–',
-      session.caffeineMg != null ? String(session.caffeineMg) : '–'
-    ].forEach((text) => {
+
+    [formatDateDisplay(session.date), String(session.entries.length), String(totalSets)].forEach((text) => {
       const td = document.createElement('td');
       td.textContent = text;
+      row.appendChild(td);
+    });
+
+    [session.durationMinutes, session.caffeineMg].forEach((value) => {
+      const td = document.createElement('td');
+      if (value != null) {
+        const badge = document.createElement('span');
+        badge.className = 'meta-badge';
+        badge.textContent = String(value);
+        td.appendChild(badge);
+      } else {
+        td.textContent = '–';
+      }
       row.appendChild(td);
     });
 

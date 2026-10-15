@@ -47,7 +47,9 @@ export function renderBodyweightView(container) {
 
   const chartContainer = document.createElement('div');
   container.appendChild(chartContainer);
-  renderLineChart(chartContainer, points);
+  // Teal (the app's secondary accent) distinguishes this from the Progress
+  // tab's blue lift charts — same chart component, different meaning.
+  renderLineChart(chartContainer, points, '#2dd4bf');
 
   // A fat-fingered entry (e.g. 785 instead of 78.5) would otherwise be
   // unrecoverable short of clearing all localStorage, which also wipes
