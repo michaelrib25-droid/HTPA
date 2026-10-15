@@ -53,12 +53,31 @@ export function renderHistoryView(container, callbacks) {
     detailCell.setAttribute('colspan', '5');
 
     session.entries.forEach((entry) => {
-      const line = document.createElement('p');
-      const setsText = entry.sets
-        .map((s) => `${s.weight}kg × ${s.reps}${s.rpe != null ? ` @RPE ${s.rpe}` : ''}`)
-        .join(', ');
-      line.textContent = `${entry.exercise}: ${setsText}`;
-      detailCell.appendChild(line);
+      const entryBlock = document.createElement('div');
+      entryBlock.className = 'detail-entry';
+
+      const name = document.createElement('div');
+      name.className = 'detail-entry-name';
+      name.textContent = entry.exercise;
+      entryBlock.appendChild(name);
+
+      const setsRow = document.createElement('div');
+      setsRow.className = 'detail-sets';
+      entry.sets.forEach((s) => {
+        const chip = document.createElement('span');
+        chip.className = 'detail-set-chip';
+        chip.textContent = `${s.weight}kg × ${s.reps}`;
+        if (s.rpe != null) {
+          const rpe = document.createElement('span');
+          rpe.className = 'detail-set-rpe';
+          rpe.textContent = `RPE ${s.rpe}`;
+          chip.appendChild(rpe);
+        }
+        setsRow.appendChild(chip);
+      });
+      entryBlock.appendChild(setsRow);
+
+      detailCell.appendChild(entryBlock);
     });
 
     const editBtn = document.createElement('button');

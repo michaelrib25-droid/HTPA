@@ -114,12 +114,36 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   background: #1f1f38;
   padding: 10px 12px;
 }
-.history-detail-row p {
-  margin: 4px 0;
-  font-size: 0.9rem;
+.detail-entry {
+  margin-bottom: 10px;
+}
+.detail-entry:last-of-type {
+  margin-bottom: 0;
+}
+.detail-entry-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+}
+.detail-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-set-chip {
+  background: #2d2d44;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.detail-set-rpe {
+  color: #a0a0b0;
+  font-size: 0.7rem;
+  margin-left: 5px;
 }
 .history-detail-row button {
-  margin-top: 6px;
+  margin-top: 10px;
   margin-right: 8px;
 }
 .progress-view select {
