@@ -86,6 +86,16 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     const row = document.createElement('div');
     row.className = 'set-row';
 
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'set-remove-btn';
+    removeBtn.textContent = '✕';
+    removeBtn.setAttribute('aria-label', 'Remove set');
+    removeBtn.addEventListener('click', () => {
+      row.remove();
+      markDirty();
+    });
+
     const weightInput = document.createElement('input');
     weightInput.type = 'number';
     weightInput.step = '0.5';
@@ -106,6 +116,17 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     rpeInput.max = '10';
     rpeInput.placeholder = 'RPE';
     rpeInput.value = set && set.rpe != null ? set.rpe : '';
+    // min/max alone never trigger browser validation here (these inputs
+    // aren't inside a <form>, so there's no submit event to check them) —
+    // without this, an out-of-range RPE was silently cleared on save with
+    // no indication why. Validate on every change instead.
+    function validateRpe() {
+      const v = rpeInput.value;
+      const invalid = v !== '' && (Number(v) < 0 || Number(v) > 10);
+      rpeInput.classList.toggle('input-error', invalid);
+    }
+    rpeInput.addEventListener('input', validateRpe);
+    validateRpe();
 
     const rpeWrap = document.createElement('div');
     rpeWrap.className = 'rpe-wrap';
@@ -148,6 +169,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     row.appendChild(weightInput);
     row.appendChild(repsInput);
     row.appendChild(rpeWrap);
+    row.appendChild(removeBtn);
     setsContainer.appendChild(row);
   }
 
@@ -176,7 +198,21 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
         }
       });
     });
-    block.appendChild(nameInput);
+    const header = document.createElement('div');
+    header.className = 'exercise-header';
+    header.appendChild(nameInput);
+
+    const removeBlockBtn = document.createElement('button');
+    removeBlockBtn.type = 'button';
+    removeBlockBtn.className = 'exercise-remove-btn';
+    removeBlockBtn.textContent = '✕';
+    removeBlockBtn.setAttribute('aria-label', 'Remove exercise');
+    removeBlockBtn.addEventListener('click', () => {
+      block.remove();
+      markDirty();
+    });
+    header.appendChild(removeBlockBtn);
+    block.appendChild(header);
 
     const setsContainer = document.createElement('div');
     setsContainer.className = 'sets-container';
@@ -259,8 +295,14 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   saveBtn.className = 'save-btn';
   saveBtn.textContent = 'Save';
   saveBtn.addEventListener('click', () => {
-    const { entries, droppedBlocks, droppedSets } = collectEntries(exerciseList);
+    const { entries, droppedBlocks, droppedSets, invalidRpe } = collectEntries(exerciseList);
+    if (invalidRpe > 0) {
+      errorMsg.textContent = `Fix ${invalidRpe} RPE value(s) outside the 0–10 range before saving.`;
+      errorMsg.style.display = 'block';
+      return;
+    }
     if (entries.length === 0) {
+      errorMsg.textContent = 'Add at least one exercise with a complete set (name, weight, and reps) before saving.';
       errorMsg.style.display = 'block';
       return;
     }
@@ -287,6 +329,7 @@ function collectEntries(exerciseList) {
   const entries = [];
   let droppedBlocks = 0;
   let droppedSets = 0;
+  let invalidRpe = 0;
   exerciseList.querySelectorAll('.exercise-block').forEach((block) => {
     const name = block.querySelector('input[type="text"]').value.trim();
     if (!name) { droppedBlocks++; return; }
@@ -296,15 +339,16 @@ function collectEntries(exerciseList) {
       const weight = Number(weightInput.value);
       const reps = Number(repsInput.value);
       if (!weightInput.value || !repsInput.value || weight < 0 || reps < 1) { droppedSets++; return; }
-      const rpe = rpeInput.value ? Number(rpeInput.value) : null;
-      sets.push({
-        weight,
-        reps,
-        rpe: rpe != null && rpe >= 0 && rpe <= 10 ? rpe : null
-      });
+      let rpe = null;
+      if (rpeInput.value) {
+        const rawRpe = Number(rpeInput.value);
+        if (rawRpe >= 0 && rawRpe <= 10) rpe = rawRpe;
+        else invalidRpe++;
+      }
+      sets.push({ weight, reps, rpe });
     });
     if (sets.length > 0) entries.push({ exercise: name, sets });
     else droppedBlocks++;
   });
-  return { entries, droppedBlocks, droppedSets };
+  return { entries, droppedBlocks, droppedSets, invalidRpe };
 }

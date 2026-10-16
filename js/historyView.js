@@ -21,6 +21,21 @@ function appendBackupToolbar(container, callbacks) {
   });
   toolbar.appendChild(exportBtn);
 
+  const exportCsvBtn = document.createElement('button');
+  exportCsvBtn.className = 'secondary-btn';
+  exportCsvBtn.textContent = 'Export CSV';
+  exportCsvBtn.addEventListener('click', () => {
+    const csv = Store.exportSessionsCsv();
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `htpa-sessions-${todayIso()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  toolbar.appendChild(exportCsvBtn);
+
   const importInput = document.createElement('input');
   importInput.type = 'file';
   importInput.accept = 'application/json';

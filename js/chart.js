@@ -58,7 +58,11 @@ function formatTick(value) {
 }
 
 export function renderLineChart(container, points, options = {}) {
-  const { color = '#4f6df5', unit = '' } = options;
+  // `secondary` overlays a second, dashed, fill-less/point-less line on the
+  // same x/y scale (e.g. a moving average alongside the raw series) — kept
+  // optional so the single-series callers (Progress, session trends) are
+  // unaffected.
+  const { color = '#4f6df5', unit = '', secondary = null } = options;
   container.innerHTML = '';
   if (points.length === 0) return;
 
@@ -67,7 +71,7 @@ export function renderLineChart(container, points, options = {}) {
   const xStep = points.length > 1 ? plotWidth / (points.length - 1) : 0;
   const baselineY = PADDING_TOP + plotHeight;
 
-  const values = points.map((p) => p.y);
+  const values = points.map((p) => p.y).concat(secondary ? secondary.points.map((p) => p.y) : []);
   const { min: scaleMin, max: scaleMax, ticks } = niceScale(Math.min(...values), Math.max(...values), GRID_TICKS);
   const range = scaleMax - scaleMin || 1;
 
@@ -120,6 +124,15 @@ export function renderLineChart(container, points, options = {}) {
       coords.map((c) => `L${c.x},${c.y}`).join(' ') +
       ` L${last.x},${baselineY} Z`;
     svg.appendChild(el('path', { d, fill: `url(#${gradientId})`, stroke: 'none' }));
+  }
+
+  if (secondary && secondary.points.length > 1) {
+    const secCoords = secondary.points.map((p, i) => ({ x: scaleX(i), y: scaleY(p.y) }));
+    svg.appendChild(el('polyline', {
+      points: secCoords.map((c) => `${c.x},${c.y}`).join(' '),
+      fill: 'none', stroke: secondary.color || '#a0a0b0', 'stroke-width': '1.5',
+      'stroke-dasharray': '4,3', 'stroke-linejoin': 'round', 'stroke-linecap': 'round'
+    }));
   }
 
   if (coords.length > 1) {

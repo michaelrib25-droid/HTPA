@@ -33,7 +33,8 @@ export function renderBodyweightView(container) {
 
   container.appendChild(form);
 
-  const points = Store.getBodyweightPoints().map((p) => ({
+  const rawPoints = Store.getBodyweightPoints();
+  const points = rawPoints.map((p) => ({
     x: p.date.slice(5).replace('-', '.'),
     y: p.weight,
     tooltip: `${formatDateDisplay(p.date)} — ${p.weight}kg`
@@ -51,11 +52,24 @@ export function renderBodyweightView(container) {
     return;
   }
 
+  const caption = document.createElement('p');
+  caption.className = 'chart-caption';
+  caption.textContent = rawPoints.length > 1
+    ? 'Solid = logged weight. Dashed = trailing 7-day average, smoothing day-to-day fluctuation.'
+    : 'Solid = logged weight.';
+  container.appendChild(caption);
+
   const chartContainer = document.createElement('div');
   container.appendChild(chartContainer);
   // Teal (the app's secondary accent) distinguishes this from the Progress
-  // tab's blue lift charts — same chart component, different meaning.
-  renderLineChart(chartContainer, points, { color: '#2dd4bf', unit: 'kg' });
+  // tab's blue lift charts — same chart component, different meaning. The
+  // 7-day average overlay uses the primary accent (dashed) purely to stay
+  // inside the app's existing 2-accent + red palette.
+  renderLineChart(chartContainer, points, {
+    color: '#2dd4bf',
+    unit: 'kg',
+    secondary: { points: rawPoints.map((p) => ({ y: p.avg7 })), color: '#4f6df5' }
+  });
 
   // A fat-fingered entry (e.g. 785 instead of 78.5) would otherwise be
   // unrecoverable short of clearing all localStorage, which also wipes
@@ -68,9 +82,20 @@ export function renderBodyweightView(container) {
       const row = document.createElement('div');
       row.className = 'bodyweight-row';
 
-      const label = document.createElement('span');
-      label.textContent = `${formatDateDisplay(entry.date)}: ${entry.weight}kg`;
-      row.appendChild(label);
+      const labelGroup = document.createElement('div');
+      labelGroup.className = 'bodyweight-row-labels';
+
+      const dateLabel = document.createElement('span');
+      dateLabel.className = 'bodyweight-row-date';
+      dateLabel.textContent = formatDateDisplay(entry.date);
+      labelGroup.appendChild(dateLabel);
+
+      const weightLabel = document.createElement('span');
+      weightLabel.className = 'bodyweight-row-weight';
+      weightLabel.textContent = `${entry.weight}kg`;
+      labelGroup.appendChild(weightLabel);
+
+      row.appendChild(labelGroup);
 
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'danger-btn';

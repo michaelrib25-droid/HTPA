@@ -44,22 +44,67 @@ export function renderProgressView(container) {
   }
   container.appendChild(select);
 
+  const METRICS = {
+    weight: {
+      label: 'Top set',
+      unit: 'kg',
+      caption: 'Heaviest set logged per session, in kg.',
+      value: (p) => p.weight,
+      tooltip: (p) => `top set ${p.weight}kg × ${p.reps}`
+    },
+    volume: {
+      label: 'Volume',
+      unit: 'kg',
+      caption: 'Total volume (weight × reps, summed across all sets) per session, in kg.',
+      value: (p) => p.volume,
+      tooltip: (p) => `volume ${p.volume}kg`
+    },
+    e1rm: {
+      label: 'Est. 1RM',
+      unit: 'kg',
+      caption: 'Estimated one-rep max per session (Epley formula), in kg.',
+      value: (p) => p.e1rm,
+      tooltip: (p) => `est. 1RM ${p.e1rm}kg (from ${p.weight}kg × ${p.reps})`
+    }
+  };
+  let metric = 'weight';
+
+  const metricToggle = document.createElement('div');
+  metricToggle.className = 'metric-toggle';
+  const metricButtons = {};
+  Object.entries(METRICS).forEach(([key, def]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = key === metric ? 'secondary-btn active' : 'secondary-btn';
+    btn.textContent = def.label;
+    btn.addEventListener('click', () => {
+      if (metric === key) return;
+      metric = key;
+      Object.entries(metricButtons).forEach(([k, b]) => b.classList.toggle('active', k === metric));
+      drawFor(select.value);
+    });
+    metricButtons[key] = btn;
+    metricToggle.appendChild(btn);
+  });
+  container.appendChild(metricToggle);
+
   const caption = document.createElement('p');
   caption.className = 'chart-caption';
-  caption.textContent = 'Heaviest set logged per session, in kg. Point color reflects RPE when logged (blue = easier, red = harder). Hover (or tap) a point for details.';
   container.appendChild(caption);
 
   const chartContainer = document.createElement('div');
   container.appendChild(chartContainer);
 
   function drawFor(key) {
+    const def = METRICS[metric];
+    caption.textContent = `${def.caption} Point color reflects RPE when logged (blue = easier, red = harder). Hover (or tap) a point for details.`;
     const points = Store.getProgressPoints(key).map((p) => ({
       x: p.date.slice(5).replace('-', '.'),
-      y: p.weight,
-      tooltip: `${formatDateDisplay(p.date)} — top set ${p.weight}kg × ${p.reps}` + (p.rpe != null ? ` @ RPE ${p.rpe}` : ''),
+      y: def.value(p),
+      tooltip: `${formatDateDisplay(p.date)} — ${def.tooltip(p)}` + (p.rpe != null ? ` @ RPE ${p.rpe}` : ''),
       pointColor: p.rpe != null ? rpeColor(p.rpe) : undefined
     }));
-    renderLineChart(chartContainer, points, { color: '#4f6df5', unit: 'kg' });
+    renderLineChart(chartContainer, points, { color: '#4f6df5', unit: def.unit });
   }
 
   select.addEventListener('change', () => drawFor(select.value));

@@ -66,6 +66,11 @@ function sessionsNewestFirst(sessions) {
   return [...sessions].reverse().sort((a, b) => b.date.localeCompare(a.date));
 }
 
+function csvField(value) {
+  const str = String(value);
+  return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+
 export function formatDateDisplay(iso) {
   return iso.replace(/-/g, '.');
 }
@@ -131,6 +136,9 @@ export const Store = {
       .sort((a, b) => a.label.localeCompare(b.label));
   },
 
+  // Returns one point per session that touched this exercise, carrying all
+  // three metrics the Progress chart can show (top-set weight, total volume,
+  // estimated 1RM) so the view can switch between them without re-deriving.
   getProgressPoints(key) {
     const points = [];
     for (const session of this.data.sessions) {
@@ -139,7 +147,11 @@ export const Store = {
         .flatMap((e) => e.sets);
       if (matchingSets.length === 0) continue;
       const best = bestSetInSets(matchingSets);
-      points.push({ date: session.date, weight: best.weight, reps: best.reps, rpe: best.rpe });
+      const volume = matchingSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+      // Epley formula, taken from whichever set in the session implies the
+      // highest 1RM (not necessarily the heaviest-weight set).
+      const e1rm = Math.round(Math.max(...matchingSets.map((s) => s.weight * (1 + s.reps / 30))) * 10) / 10;
+      points.push({ date: session.date, weight: best.weight, reps: best.reps, rpe: best.rpe, volume, e1rm });
     }
     return points.sort((a, b) => a.date.localeCompare(b.date));
   },
@@ -207,13 +219,51 @@ export const Store = {
   },
 
   getBodyweightPoints() {
-    return this.data.bodyweight
+    const points = this.data.bodyweight
       .map((b) => ({ date: b.date, weight: b.weight }))
       .sort((a, b) => a.date.localeCompare(b.date));
+    // Trailing 7-*calendar*-day average, not "last 7 entries" — entries
+    // aren't necessarily daily, so a count-based window would span a very
+    // different amount of real time depending on how often weigh-ins happen.
+    const MS_PER_DAY = 86400000;
+    return points.map((p) => {
+      const windowEnd = new Date(p.date).getTime();
+      const windowStart = windowEnd - 6 * MS_PER_DAY;
+      const inWindow = points.filter((q) => {
+        const t = new Date(q.date).getTime();
+        return t >= windowStart && t <= windowEnd;
+      });
+      const avg7 = inWindow.reduce((sum, q) => sum + q.weight, 0) / inWindow.length;
+      return { ...p, avg7: Math.round(avg7 * 10) / 10 };
+    });
   },
 
   exportData() {
     return JSON.stringify(this.data, null, 2);
+  },
+
+  // One row per logged set (session-level fields like date/duration/caffeine
+  // repeat across that session's rows) — flat and spreadsheet-friendly,
+  // unlike exportData()'s nested JSON which is for round-tripping, not analysis.
+  exportSessionsCsv() {
+    const header = ['Date', 'Exercise', 'Weight (kg)', 'Reps', 'RPE', 'Duration (min)', 'Caffeine (mg)'];
+    const rows = [header];
+    for (const session of [...this.data.sessions].sort((a, b) => a.date.localeCompare(b.date))) {
+      for (const entry of session.entries) {
+        for (const set of entry.sets) {
+          rows.push([
+            session.date,
+            entry.exercise,
+            set.weight,
+            set.reps,
+            set.rpe != null ? set.rpe : '',
+            session.durationMinutes != null ? session.durationMinutes : '',
+            session.caffeineMg != null ? session.caffeineMg : ''
+          ]);
+        }
+      }
+    }
+    return rows.map((row) => row.map(csvField).join(',')).join('\r\n');
   },
 
   importData(json) {
