@@ -3,15 +3,16 @@ import { renderHistoryView } from './historyView.js';
 import { renderProgressView } from './progressView.js';
 import { renderRecordsView } from './recordsView.js';
 import { renderBodyweightView } from './bodyweightView.js';
+import { createIcon } from './icons.js';
 
 const appRoot = document.getElementById('app');
 
 const TABS = [
-  { id: 'log', label: 'Log' },
-  { id: 'history', label: 'History' },
-  { id: 'progress', label: 'Progress' },
-  { id: 'records', label: 'Records' },
-  { id: 'bodyweight', label: 'Bodyweight' }
+  { id: 'log', label: 'Log', icon: 'log' },
+  { id: 'history', label: 'History', icon: 'history' },
+  { id: 'progress', label: 'Progress', icon: 'progress' },
+  { id: 'records', label: 'Records', icon: 'records' },
+  { id: 'bodyweight', label: 'Bodyweight', icon: 'bodyweight' }
 ];
 
 let activeTab = 'log';
@@ -25,8 +26,12 @@ function render() {
   nav.className = 'tab-nav';
   TABS.forEach((tab) => {
     const btn = document.createElement('button');
-    btn.textContent = tab.label;
     btn.className = tab.id === activeTab ? 'active' : '';
+    const icon = createIcon(tab.icon);
+    if (icon) btn.appendChild(icon);
+    const label = document.createElement('span');
+    label.textContent = tab.label;
+    btn.appendChild(label);
     btn.addEventListener('click', () => {
       if (activeTab === 'log' && logDirty &&
           !confirm('You have unsaved changes in the Log form. Switch tabs and discard them?')) {

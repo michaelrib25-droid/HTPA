@@ -53,14 +53,32 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   padding: 12px;
   flex: 1;
 }
+.repeat-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+  background: rgba(45, 212, 191, 0.08);
+}
 .session-meta {
   display: flex;
   gap: 8px;
   margin: 8px 0;
 }
-.session-meta input {
+.meta-field {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.meta-field label {
+  font-size: 0.7rem;
+  color: #a0a0b0;
+}
+.meta-field input {
+  width: 100%;
 }
 .exercise-block {
   background: #22223b;
@@ -97,6 +115,21 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
 .backup-toolbar button {
   flex: 1;
   font-size: 0.8rem;
+}
+.session-trends {
+  margin-bottom: 16px;
+}
+.session-trend-chart {
+  margin-bottom: 12px;
+}
+.detail-set-chip.pr-chip {
+  background: rgba(45, 212, 191, 0.18);
+  border: 1px solid var(--accent-2);
+}
+.pr-star {
+  color: var(--accent-2);
+  font-weight: 700;
+  font-size: 0.75rem;
 }
 .history-table {
   width: 100%;
@@ -196,11 +229,15 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
 }
 .tab-nav button {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   background: none;
   border: none;
   border-radius: 0;
-  padding: 12px 6px;
-  font-size: 0.8rem;
+  padding: 10px 4px 8px;
+  font-size: 0.75rem;
   color: #a0a0b0;
   white-space: nowrap;
 }

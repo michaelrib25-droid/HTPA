@@ -1,4 +1,5 @@
-import { Store, formatDateDisplay, todayIso } from './store.js';
+import { Store, formatDateDisplay, todayIso, normalizeKey } from './store.js';
+import { renderLineChart } from './chart.js';
 
 function appendBackupToolbar(container, callbacks) {
   const toolbar = document.createElement('div');
@@ -48,11 +49,57 @@ function appendBackupToolbar(container, callbacks) {
   container.appendChild(toolbar);
 }
 
+// Duration/caffeine have no dedicated tab of their own (unlike bodyweight),
+// so their trend lives here alongside the data that drives them. Each chart
+// only renders once at least one session actually logged that field.
+function appendSessionTrends(container) {
+  const durationPoints = Store.getDurationPoints().map((p) => ({
+    x: p.date.slice(5).replace('-', '.'),
+    y: p.value,
+    tooltip: `${formatDateDisplay(p.date)} — ${p.value} min`
+  }));
+  const caffeinePoints = Store.getCaffeinePoints().map((p) => ({
+    x: p.date.slice(5).replace('-', '.'),
+    y: p.value,
+    tooltip: `${formatDateDisplay(p.date)} — ${p.value} mg`
+  }));
+
+  if (durationPoints.length === 0 && caffeinePoints.length === 0) return;
+
+  const trends = document.createElement('div');
+  trends.className = 'session-trends';
+
+  if (durationPoints.length > 0) {
+    const caption = document.createElement('p');
+    caption.className = 'chart-caption';
+    caption.textContent = 'Session duration over time.';
+    trends.appendChild(caption);
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'session-trend-chart';
+    trends.appendChild(chartContainer);
+    renderLineChart(chartContainer, durationPoints, { color: '#4f6df5', unit: 'min' });
+  }
+
+  if (caffeinePoints.length > 0) {
+    const caption = document.createElement('p');
+    caption.className = 'chart-caption';
+    caption.textContent = 'Caffeine intake over time.';
+    trends.appendChild(caption);
+    const chartContainer = document.createElement('div');
+    chartContainer.className = 'session-trend-chart';
+    trends.appendChild(chartContainer);
+    renderLineChart(chartContainer, caffeinePoints, { color: '#2dd4bf', unit: 'mg' });
+  }
+
+  container.appendChild(trends);
+}
+
 export function renderHistoryView(container, callbacks) {
   container.innerHTML = '';
   container.className = 'history-view';
 
   appendBackupToolbar(container, callbacks);
+  appendSessionTrends(container);
 
   const sessions = [...Store.data.sessions].sort((a, b) => b.date.localeCompare(a.date));
 
@@ -76,6 +123,11 @@ export function renderHistoryView(container, callbacks) {
   });
   thead.appendChild(headRow);
   table.appendChild(thead);
+
+  // Keyed by exercise so each set chip below can check if it IS that
+  // exercise's current all-time PR (same date/weight/reps), not just a
+  // high-looking number.
+  const prByKey = new Map(Store.getAllPRs().map((pr) => [normalizeKey(pr.label), pr]));
 
   const tbody = document.createElement('tbody');
 
@@ -121,10 +173,18 @@ export function renderHistoryView(container, callbacks) {
 
       const setsRow = document.createElement('div');
       setsRow.className = 'detail-sets';
+      const pr = prByKey.get(normalizeKey(entry.exercise));
       entry.sets.forEach((s) => {
         const chip = document.createElement('span');
-        chip.className = 'detail-set-chip';
-        chip.textContent = `${s.weight}kg × ${s.reps}`;
+        const isPR = pr && pr.date === session.date && pr.weight === s.weight && pr.reps === s.reps;
+        chip.className = isPR ? 'detail-set-chip pr-chip' : 'detail-set-chip';
+        if (isPR) {
+          const star = document.createElement('span');
+          star.className = 'pr-star';
+          star.textContent = '★ PR ';
+          chip.appendChild(star);
+        }
+        chip.appendChild(document.createTextNode(`${s.weight}kg × ${s.reps}`));
         if (s.rpe != null) {
           const rpe = document.createElement('span');
           rpe.className = 'detail-set-rpe';

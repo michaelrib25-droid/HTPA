@@ -47,13 +47,36 @@ each call.
 
 Strict layering:
 - `store.js` — the only module that touches `localStorage`. All data (`sessions`,
-  `bodyweight`) lives in one JSON blob under key `htpa_training_v1`. Exposes CRUD plus
+  `bodyweight`) lives in one JSON blob under key `htpa_training_v1`. Exposes CRUD,
+  export/import (full-data JSON backup, used by History's Export/Import buttons), and
   derived-data getters (`distinctExercises()`, `getProgressPoints()`, `getAllPRs()`,
-  `getBodyweightPoints()`). Has zero DOM knowledge.
+  `getBodyweightPoints()`, `getDurationPoints()`, `getCaffeinePoints()`,
+  `mostRecentlyTrainedExerciseKey()`, `getLastSetForExercise()`, `getMostRecentSession()`
+  — the latter three share a private `sessionsNewestFirst()` helper that reverses
+  insertion order *before* sorting by date, since `date` is day-only and a plain sort
+  falls back to oldest-first insertion order when two sessions share a date). Has zero
+  DOM knowledge.
 - `js/*View.js` — one per tab (Log/History/Progress/Records/Bodyweight), each owns its
   own DOM rendering and never reads/writes `localStorage` directly, only through `Store`.
 - `chart.js` — hand-rolled inline-SVG line chart, shared by Progress and Bodyweight
-  views. No charting library.
+  views. No charting library. A point may carry an optional `pointColor` to override the
+  line's color for just that dot (used by Progress to color points by RPE); the
+  line/area always stay the series `color`.
+- `icons.js` — hand-rolled inline-SVG tab icons (same primitives style as `chart.js`,
+  not an icon font/library or emoji), used by `app.js`'s tab nav.
+
+The Log form (`logView.js`) tracks its own "dirty" state (any real user edit — typing,
+adding a set/exercise) via a delegated `input` listener plus explicit flags on the
+add-set/add-exercise buttons, and reports it up to `app.js` through an `onDirtyChange`
+callback; `app.js` confirms before a tab switch discards unsaved Log changes. Every fresh
+`renderLogView()` call resets this to clean — don't remove that reset, or a stale dirty
+flag from a previous visit can wrongly block an unrelated later switch.
+
+When adding a new exercise name to a session, `logView.js` auto-prefills still-empty
+weight/reps fields from `Store.getLastSetForExercise()` (never RPE — that's treated as
+subjective to today's session, not something to carry over). "Repeat last session" reuses
+the same lookup per exercise when rebuilding the exercise list from
+`Store.getMostRecentSession()`. Keep that no-RPE-carryover behavior if you touch either.
 
 Data model nuance that affects a lot of the logic: **exercises are not a normalized
 entity** — just free-text strings on each set entry. Anywhere the app needs "the list of

@@ -1,17 +1,12 @@
-import { Store, formatDateDisplay, normalizeKey } from './store.js';
+import { Store, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
 
-// The exercise most recently trained (last session, its first entry), so the
-// picker opens on something relevant instead of forcing a scroll/select every time.
-// Reverse to most-recently-added-first before the date sort: `date` is day-only,
-// so two sessions logged the same day compare as equal and a plain sort would
-// otherwise fall back to original (oldest-first) insertion order on that tie.
-function mostRecentExerciseKey() {
-  const sorted = [...Store.data.sessions].reverse().sort((a, b) => b.date.localeCompare(a.date));
-  for (const session of sorted) {
-    if (session.entries.length > 0) return normalizeKey(session.entries[0].exercise);
-  }
-  return null;
+// Maps RPE 0-10 to a blue (easier) -> red (harder) hue, so effort is visible
+// on the chart itself without a separate legend widget.
+function rpeColor(rpe) {
+  const clamped = Math.max(0, Math.min(10, rpe));
+  const hue = 220 - (clamped / 10) * 220;
+  return `hsl(${hue}, 70%, 58%)`;
 }
 
 export function renderProgressView(container) {
@@ -35,7 +30,7 @@ export function renderProgressView(container) {
     opt.textContent = ex.label;
     select.appendChild(opt);
   });
-  const recentKey = mostRecentExerciseKey();
+  const recentKey = Store.mostRecentlyTrainedExerciseKey();
   if (recentKey && exercises.some((ex) => ex.key === recentKey)) {
     select.value = recentKey;
   }
@@ -43,7 +38,7 @@ export function renderProgressView(container) {
 
   const caption = document.createElement('p');
   caption.className = 'chart-caption';
-  caption.textContent = 'Heaviest set logged per session, in kg. Hover (or tap) a point for the date and reps.';
+  caption.textContent = 'Heaviest set logged per session, in kg. Point color reflects RPE when logged (blue = easier, red = harder). Hover (or tap) a point for details.';
   container.appendChild(caption);
 
   const chartContainer = document.createElement('div');
@@ -53,7 +48,8 @@ export function renderProgressView(container) {
     const points = Store.getProgressPoints(key).map((p) => ({
       x: p.date.slice(5).replace('-', '.'),
       y: p.weight,
-      tooltip: `${formatDateDisplay(p.date)} — top set ${p.weight}kg × ${p.reps}`
+      tooltip: `${formatDateDisplay(p.date)} — top set ${p.weight}kg × ${p.reps}` + (p.rpe != null ? ` @ RPE ${p.rpe}` : ''),
+      pointColor: p.rpe != null ? rpeColor(p.rpe) : undefined
     }));
     renderLineChart(chartContainer, points, { color: '#4f6df5', unit: 'kg' });
   }

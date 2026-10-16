@@ -129,8 +129,10 @@ export function renderLineChart(container, points, options = {}) {
   }
 
   coords.forEach((c, i) => {
+    // A point can override the line's color (e.g. progressView colors points
+    // by RPE) without affecting the line/area, which always stay `color`.
     const circle = el('circle', {
-      cx: c.x, cy: c.y, r: '3.5', fill: color, stroke: '#1a1a2e', 'stroke-width': '1.5'
+      cx: c.x, cy: c.y, r: '3.5', fill: points[i].pointColor || color, stroke: '#1a1a2e', 'stroke-width': '1.5'
     });
     // <title> only shows on hover, which doesn't exist on a touchscreen —
     // kept for desktop/mouse use, but the visible text labels below are

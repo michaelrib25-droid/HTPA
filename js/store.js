@@ -41,6 +41,14 @@ function bestSetInSets(sets) {
   }, null);
 }
 
+// Most-recently-added first. `date` is day-only, so two sessions logged the
+// same day compare as equal — reversing insertion order *before* the sort
+// means a stable sort keeps them in recently-added-first order instead of
+// falling back to oldest-first insertion order on that tie.
+function sessionsNewestFirst(sessions) {
+  return [...sessions].reverse().sort((a, b) => b.date.localeCompare(a.date));
+}
+
 export function formatDateDisplay(iso) {
   return iso.replace(/-/g, '.');
 }
@@ -114,9 +122,47 @@ export const Store = {
         .flatMap((e) => e.sets);
       if (matchingSets.length === 0) continue;
       const best = bestSetInSets(matchingSets);
-      points.push({ date: session.date, weight: best.weight, reps: best.reps });
+      points.push({ date: session.date, weight: best.weight, reps: best.reps, rpe: best.rpe });
     }
     return points.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  mostRecentlyTrainedExerciseKey() {
+    for (const session of sessionsNewestFirst(this.data.sessions)) {
+      if (session.entries.length > 0) return normalizeKey(session.entries[0].exercise);
+    }
+    return null;
+  },
+
+  // Last-used weight/reps for an exercise, so the Log form can prefill a
+  // sensible starting point instead of a blank set.
+  getLastSetForExercise(exerciseName) {
+    const key = normalizeKey(exerciseName);
+    for (const session of sessionsNewestFirst(this.data.sessions)) {
+      const matching = session.entries.filter((e) => normalizeKey(e.exercise) === key);
+      if (matching.length === 0) continue;
+      const sets = matching[matching.length - 1].sets;
+      if (sets.length > 0) return sets[sets.length - 1];
+    }
+    return null;
+  },
+
+  getMostRecentSession() {
+    return sessionsNewestFirst(this.data.sessions)[0] || null;
+  },
+
+  getDurationPoints() {
+    return this.data.sessions
+      .filter((s) => s.durationMinutes != null)
+      .map((s) => ({ date: s.date, value: s.durationMinutes }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  getCaffeinePoints() {
+    return this.data.sessions
+      .filter((s) => s.caffeineMg != null)
+      .map((s) => ({ date: s.date, value: s.caffeineMg }))
+      .sort((a, b) => a.date.localeCompare(b.date));
   },
 
   getAllPRs() {

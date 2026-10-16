@@ -19,6 +19,11 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   title.textContent = existingSession ? 'Edit Session' : 'Log Session';
   container.appendChild(title);
 
+  const repeatBtn = document.createElement('button');
+  repeatBtn.type = 'button';
+  repeatBtn.className = 'repeat-btn';
+  repeatBtn.textContent = '↻ Repeat last session';
+
   const dateInput = document.createElement('input');
   dateInput.type = 'date';
   dateInput.value = existingSession ? existingSession.date : todayIso();
@@ -27,19 +32,27 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   const meta = document.createElement('div');
   meta.className = 'session-meta';
 
+  function metaField(labelText, input) {
+    const wrap = document.createElement('div');
+    wrap.className = 'meta-field';
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
   const durationInput = document.createElement('input');
   durationInput.type = 'number';
   durationInput.min = '0';
-  durationInput.placeholder = 'Duration (min)';
   durationInput.value = existingSession && existingSession.durationMinutes != null ? existingSession.durationMinutes : '';
-  meta.appendChild(durationInput);
+  meta.appendChild(metaField('Duration (min)', durationInput));
 
   const caffeineInput = document.createElement('input');
   caffeineInput.type = 'number';
   caffeineInput.min = '0';
-  caffeineInput.placeholder = 'Caffeine (mg)';
   caffeineInput.value = existingSession && existingSession.caffeineMg != null ? existingSession.caffeineMg : '';
-  meta.appendChild(caffeineInput);
+  meta.appendChild(metaField('Caffeine (mg)', caffeineInput));
 
   container.appendChild(meta);
 
@@ -96,6 +109,21 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     nameInput.setAttribute('list', 'exercise-names');
     nameInput.placeholder = 'Exercise name';
     nameInput.value = prefill ? prefill.exercise : '';
+    // Prefill still-empty set rows with the last-used weight/reps for this
+    // exercise, so repeating a lift doesn't start from a blank set every time.
+    // Only touches rows the user hasn't typed into yet, and never RPE (that's
+    // subjective to today's session, not something to carry over).
+    nameInput.addEventListener('input', () => {
+      const last = Store.getLastSetForExercise(nameInput.value);
+      if (!last) return;
+      setsContainer.querySelectorAll('.set-row').forEach((row) => {
+        const [weightInput, repsInput] = row.querySelectorAll('input');
+        if (!weightInput.value && !repsInput.value) {
+          weightInput.value = last.weight;
+          repsInput.value = last.reps;
+        }
+      });
+    });
     block.appendChild(nameInput);
 
     const setsContainer = document.createElement('div');
@@ -126,6 +154,23 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     addExerciseBlock(null);
   }
 
+  if (!existingSession && Store.getMostRecentSession()) {
+    repeatBtn.addEventListener('click', () => {
+      if (dirty && !confirm('Replace your current entries with last session\'s exercises?')) return;
+      const lastSession = Store.getMostRecentSession();
+      exerciseList.innerHTML = '';
+      lastSession.entries.forEach((entry) => {
+        const last = Store.getLastSetForExercise(entry.exercise);
+        addExerciseBlock({
+          exercise: entry.exercise,
+          sets: last ? [{ weight: last.weight, reps: last.reps, rpe: null }] : []
+        });
+      });
+      markDirty();
+    });
+    container.insertBefore(repeatBtn, dateInput);
+  }
+
   const addExerciseBtn = document.createElement('button');
   addExerciseBtn.type = 'button';
   addExerciseBtn.textContent = '+ Add exercise';
@@ -138,6 +183,17 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   // Delegated listener catches edits to any input added above (date, duration,
   // caffeine, exercise name, weight/reps/RPE) without wiring each one individually.
   container.addEventListener('input', markDirty);
+
+  // Enter jumps to the next input/button in reading order instead of doing
+  // nothing — on a phone's on-screen keyboard this lets a whole session be
+  // logged without reaching for the Save button until the very end.
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    e.preventDefault();
+    const focusables = [...container.querySelectorAll('input, button')];
+    const idx = focusables.indexOf(e.target);
+    if (idx >= 0 && idx < focusables.length - 1) focusables[idx + 1].focus();
+  });
 
   const errorMsg = document.createElement('p');
   errorMsg.className = 'log-error';
