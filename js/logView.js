@@ -117,7 +117,12 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
       }
       const tip = document.createElement('div');
       tip.className = 'help-tooltip';
-      tip.textContent = 'RPE = Rate of Perceived Exertion';
+      const line1 = document.createElement('div');
+      line1.textContent = 'RPE = Rate of Perceived Exertion';
+      const line2 = document.createElement('div');
+      line2.textContent = '1-10 wie schwers sich anfühlte';
+      tip.appendChild(line1);
+      tip.appendChild(line2);
       rpeWrap.appendChild(tip);
       activeTooltip = tip;
       setTimeout(() => {
