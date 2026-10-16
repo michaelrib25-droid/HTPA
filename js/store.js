@@ -8,7 +8,7 @@ function genId(prefix) {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function normalizeKey(name) {
+export function normalizeKey(name) {
   return name.trim().toLowerCase();
 }
 
@@ -147,5 +147,18 @@ export const Store = {
     return this.data.bodyweight
       .map((b) => ({ date: b.date, weight: b.weight }))
       .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  exportData() {
+    return JSON.stringify(this.data, null, 2);
+  },
+
+  importData(json) {
+    const parsed = JSON.parse(json);
+    if (!Array.isArray(parsed.sessions) || !Array.isArray(parsed.bodyweight)) {
+      throw new Error('Invalid backup file: expected { sessions: [], bodyweight: [] }');
+    }
+    this.data = parsed;
+    save(this.data);
   }
 };

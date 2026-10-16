@@ -16,6 +16,7 @@ export function renderBodyweightView(container) {
   const weightInput = document.createElement('input');
   weightInput.type = 'number';
   weightInput.step = '0.1';
+  weightInput.min = '0';
   weightInput.placeholder = 'kg';
   form.appendChild(weightInput);
 
@@ -23,7 +24,7 @@ export function renderBodyweightView(container) {
   saveBtn.className = 'save-btn';
   saveBtn.textContent = 'Save';
   saveBtn.addEventListener('click', () => {
-    if (!weightInput.value) return;
+    if (!weightInput.value || Number(weightInput.value) <= 0) return;
     Store.addBodyweight(dateInput.value, Number(weightInput.value));
     renderBodyweightView(container);
   });

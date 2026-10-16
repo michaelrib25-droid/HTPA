@@ -1,8 +1,19 @@
 import { Store, todayIso } from './store.js';
 
-export function renderLogView(container, existingSession, onDone) {
+export function renderLogView(container, existingSession, onDone, onDirtyChange = () => {}) {
   container.innerHTML = '';
   container.className = 'log-view';
+
+  // Every (re)render starts clean — resets any stale dirty flag left over
+  // from a previous time this view was open.
+  onDirtyChange(false);
+  let dirty = false;
+  function markDirty() {
+    if (!dirty) {
+      dirty = true;
+      onDirtyChange(true);
+    }
+  }
 
   const title = document.createElement('h2');
   title.textContent = existingSession ? 'Edit Session' : 'Log Session';
@@ -18,12 +29,14 @@ export function renderLogView(container, existingSession, onDone) {
 
   const durationInput = document.createElement('input');
   durationInput.type = 'number';
+  durationInput.min = '0';
   durationInput.placeholder = 'Duration (min)';
   durationInput.value = existingSession && existingSession.durationMinutes != null ? existingSession.durationMinutes : '';
   meta.appendChild(durationInput);
 
   const caffeineInput = document.createElement('input');
   caffeineInput.type = 'number';
+  caffeineInput.min = '0';
   caffeineInput.placeholder = 'Caffeine (mg)';
   caffeineInput.value = existingSession && existingSession.caffeineMg != null ? existingSession.caffeineMg : '';
   meta.appendChild(caffeineInput);
@@ -50,17 +63,21 @@ export function renderLogView(container, existingSession, onDone) {
     const weightInput = document.createElement('input');
     weightInput.type = 'number';
     weightInput.step = '0.5';
+    weightInput.min = '0';
     weightInput.placeholder = 'kg';
     weightInput.value = set ? set.weight : '';
 
     const repsInput = document.createElement('input');
     repsInput.type = 'number';
+    repsInput.min = '1';
     repsInput.placeholder = 'reps';
     repsInput.value = set ? set.reps : '';
 
     const rpeInput = document.createElement('input');
     rpeInput.type = 'number';
     rpeInput.step = '0.5';
+    rpeInput.min = '0';
+    rpeInput.max = '10';
     rpeInput.placeholder = 'RPE (optional)';
     rpeInput.value = set && set.rpe != null ? set.rpe : '';
 
@@ -94,7 +111,10 @@ export function renderLogView(container, existingSession, onDone) {
     const addSetBtn = document.createElement('button');
     addSetBtn.type = 'button';
     addSetBtn.textContent = '+ Add set';
-    addSetBtn.addEventListener('click', () => addSetRow(setsContainer, null));
+    addSetBtn.addEventListener('click', () => {
+      addSetRow(setsContainer, null);
+      markDirty();
+    });
     block.appendChild(addSetBtn);
 
     exerciseList.appendChild(block);
@@ -109,8 +129,15 @@ export function renderLogView(container, existingSession, onDone) {
   const addExerciseBtn = document.createElement('button');
   addExerciseBtn.type = 'button';
   addExerciseBtn.textContent = '+ Add exercise';
-  addExerciseBtn.addEventListener('click', () => addExerciseBlock(null));
+  addExerciseBtn.addEventListener('click', () => {
+    addExerciseBlock(null);
+    markDirty();
+  });
   container.appendChild(addExerciseBtn);
+
+  // Delegated listener catches edits to any input added above (date, duration,
+  // caffeine, exercise name, weight/reps/RPE) without wiring each one individually.
+  container.addEventListener('input', markDirty);
 
   const errorMsg = document.createElement('p');
   errorMsg.className = 'log-error';
@@ -132,13 +159,15 @@ export function renderLogView(container, existingSession, onDone) {
       return;
     }
     errorMsg.style.display = 'none';
-    const durationMinutes = durationInput.value ? Number(durationInput.value) : null;
-    const caffeineMg = caffeineInput.value ? Number(caffeineInput.value) : null;
+    const durationMinutes = durationInput.value && Number(durationInput.value) >= 0 ? Number(durationInput.value) : null;
+    const caffeineMg = caffeineInput.value && Number(caffeineInput.value) >= 0 ? Number(caffeineInput.value) : null;
     if (existingSession) {
       Store.updateSession(existingSession.id, dateInput.value, entries, durationMinutes, caffeineMg);
     } else {
       Store.addSession(dateInput.value, entries, durationMinutes, caffeineMg);
     }
+    dirty = false;
+    onDirtyChange(false);
     onDone();
   });
   container.appendChild(saveBtn);
@@ -154,11 +183,14 @@ function collectEntries(exerciseList) {
     const sets = [];
     block.querySelectorAll('.set-row').forEach((row) => {
       const [weightInput, repsInput, rpeInput] = row.querySelectorAll('input');
-      if (!weightInput.value || !repsInput.value) { droppedSets++; return; }
+      const weight = Number(weightInput.value);
+      const reps = Number(repsInput.value);
+      if (!weightInput.value || !repsInput.value || weight < 0 || reps < 1) { droppedSets++; return; }
+      const rpe = rpeInput.value ? Number(rpeInput.value) : null;
       sets.push({
-        weight: Number(weightInput.value),
-        reps: Number(repsInput.value),
-        rpe: rpeInput.value ? Number(rpeInput.value) : null
+        weight,
+        reps,
+        rpe: rpe != null && rpe >= 0 && rpe <= 10 ? rpe : null
       });
     });
     if (sets.length > 0) entries.push({ exercise: name, sets });

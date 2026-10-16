@@ -16,6 +16,7 @@ const TABS = [
 
 let activeTab = 'log';
 let editingSession = null;
+let logDirty = false;
 
 function render() {
   appRoot.innerHTML = '';
@@ -27,6 +28,10 @@ function render() {
     btn.textContent = tab.label;
     btn.className = tab.id === activeTab ? 'active' : '';
     btn.addEventListener('click', () => {
+      if (activeTab === 'log' && logDirty &&
+          !confirm('You have unsaved changes in the Log form. Switch tabs and discard them?')) {
+        return;
+      }
       editingSession = null;
       activeTab = tab.id;
       render();
@@ -44,7 +49,7 @@ function render() {
       editingSession = null;
       activeTab = 'history';
       render();
-    });
+    }, (isDirty) => { logDirty = isDirty; });
   } else if (activeTab === 'history') {
     renderHistoryView(viewContainer, {
       onEdit: (session) => {

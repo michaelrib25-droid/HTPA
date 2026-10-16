@@ -89,6 +89,15 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   color: #ff6b6b;
   font-size: 0.85rem;
 }
+.backup-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.backup-toolbar button {
+  flex: 1;
+  font-size: 0.8rem;
+}
 .history-table {
   width: 100%;
   border-collapse: collapse;

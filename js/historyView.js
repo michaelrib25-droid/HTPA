@@ -1,8 +1,58 @@
-import { Store, formatDateDisplay } from './store.js';
+import { Store, formatDateDisplay, todayIso } from './store.js';
+
+function appendBackupToolbar(container, callbacks) {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'backup-toolbar';
+
+  const exportBtn = document.createElement('button');
+  exportBtn.textContent = 'Export backup';
+  exportBtn.addEventListener('click', () => {
+    const json = Store.exportData();
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `htpa-backup-${todayIso()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  toolbar.appendChild(exportBtn);
+
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.accept = 'application/json';
+  importInput.style.display = 'none';
+  importInput.addEventListener('change', () => {
+    const file = importInput.files[0];
+    importInput.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!confirm('This replaces ALL current sessions and bodyweight entries with the backup file. Continue?')) return;
+      try {
+        Store.importData(reader.result);
+        renderHistoryView(container, callbacks);
+      } catch (e) {
+        alert(`Could not import backup: ${e.message}`);
+      }
+    };
+    reader.readAsText(file);
+  });
+  toolbar.appendChild(importInput);
+
+  const importBtn = document.createElement('button');
+  importBtn.textContent = 'Import backup';
+  importBtn.addEventListener('click', () => importInput.click());
+  toolbar.appendChild(importBtn);
+
+  container.appendChild(toolbar);
+}
 
 export function renderHistoryView(container, callbacks) {
   container.innerHTML = '';
   container.className = 'history-view';
+
+  appendBackupToolbar(container, callbacks);
 
   const sessions = [...Store.data.sessions].sort((a, b) => b.date.localeCompare(a.date));
 
