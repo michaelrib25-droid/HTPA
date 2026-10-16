@@ -24,6 +24,23 @@ function load() {
   }
 }
 
+// Deep structural check for *imported* data specifically (not load(), which
+// only ever reads the app's own previously-saved state — this is the actual
+// external-input boundary). A backup file can pass a shallow "sessions/
+// bodyweight are arrays" check while still having e.g. a session with no
+// `entries` array, which would otherwise crash every view's render (they all
+// go through distinctExercises()) the moment that data is read, bricking the
+// whole app until a valid backup is re-imported — and importData() persists
+// before anything renders, so the broken data would survive a reload too.
+function isValidImport(parsed) {
+  if (!parsed || !Array.isArray(parsed.sessions) || !Array.isArray(parsed.bodyweight)) return false;
+  return parsed.sessions.every((s) =>
+    s && typeof s.date === 'string' && Array.isArray(s.entries) &&
+    s.entries.every((e) => e && typeof e.exercise === 'string' && Array.isArray(e.sets) &&
+      e.sets.every((set) => set && typeof set.weight === 'number' && typeof set.reps === 'number'))
+  ) && parsed.bodyweight.every((b) => b && typeof b.date === 'string' && typeof b.weight === 'number');
+}
+
 function save(data) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -201,8 +218,8 @@ export const Store = {
 
   importData(json) {
     const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed.sessions) || !Array.isArray(parsed.bodyweight)) {
-      throw new Error('Invalid backup file: expected { sessions: [], bodyweight: [] }');
+    if (!isValidImport(parsed)) {
+      throw new Error('Invalid backup file: does not match the expected sessions/bodyweight structure.');
     }
     this.data = parsed;
     save(this.data);
