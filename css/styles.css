@@ -131,6 +131,42 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   flex: 1;
   min-width: 0;
 }
+.rpe-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.rpe-wrap input {
+  width: 100%;
+}
+.rpe-help {
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #44446a;
+  color: #c3c3d6;
+  font-size: 0.65rem;
+  line-height: 16px;
+}
+.help-tooltip {
+  position: absolute;
+  top: -32px;
+  right: 0;
+  z-index: 5;
+  background: #0f0f1e;
+  border: 1px solid #44446a;
+  color: #f5f5f7;
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
 .log-error {
   color: #ff6b6b;
   font-size: 0.85rem;

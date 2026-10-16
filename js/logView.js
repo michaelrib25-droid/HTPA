@@ -94,9 +94,42 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     rpeInput.placeholder = 'RPE (optional)';
     rpeInput.value = set && set.rpe != null ? set.rpe : '';
 
+    const rpeWrap = document.createElement('div');
+    rpeWrap.className = 'rpe-wrap';
+    rpeWrap.appendChild(rpeInput);
+
+    // A tiny, self-dismissing explainer instead of a native alert/confirm —
+    // those are modal and block the page, far too heavy for "what does this
+    // abbreviation mean".
+    const rpeHelp = document.createElement('button');
+    rpeHelp.type = 'button';
+    rpeHelp.className = 'rpe-help';
+    rpeHelp.textContent = '?';
+    rpeHelp.setAttribute('aria-label', 'What is RPE?');
+    rpeHelp.tabIndex = -1; // tap-only affordance, stays out of the Tab/Enter flow below
+    let activeTooltip = null;
+    rpeHelp.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (activeTooltip) {
+        activeTooltip.remove();
+        activeTooltip = null;
+        return;
+      }
+      const tip = document.createElement('div');
+      tip.className = 'help-tooltip';
+      tip.textContent = 'RPE = Rate of Perceived Exertion';
+      rpeWrap.appendChild(tip);
+      activeTooltip = tip;
+      setTimeout(() => {
+        tip.remove();
+        if (activeTooltip === tip) activeTooltip = null;
+      }, 3000);
+    });
+    rpeWrap.appendChild(rpeHelp);
+
     row.appendChild(weightInput);
     row.appendChild(repsInput);
-    row.appendChild(rpeInput);
+    row.appendChild(rpeWrap);
     setsContainer.appendChild(row);
   }
 
@@ -192,7 +225,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   container.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
     e.preventDefault();
-    const focusables = [...container.querySelectorAll('input, button')];
+    const focusables = [...container.querySelectorAll('input, button')].filter((el) => el.tabIndex !== -1);
     const idx = focusables.indexOf(e.target);
     if (idx >= 0 && idx < focusables.length - 1) focusables[idx + 1].focus();
   });
