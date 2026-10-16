@@ -1,6 +1,7 @@
-import { Store, formatDateDisplay, todayIso, normalizeKey } from './store.js';
+import { Store, formatDateDisplay, formatWeekdayShort, todayIso, normalizeKey } from './store.js';
 import { renderLineChart } from './chart.js';
 import { createIcon } from './icons.js';
+import { showToast } from './toast.js';
 
 function appendBackupToolbar(container, callbacks) {
   const toolbar = document.createElement('div');
@@ -18,6 +19,7 @@ function appendBackupToolbar(container, callbacks) {
     a.download = `htpa-backup-${todayIso()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('Backup exported');
   });
   toolbar.appendChild(exportBtn);
 
@@ -33,6 +35,7 @@ function appendBackupToolbar(container, callbacks) {
     a.download = `htpa-sessions-${todayIso()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('CSV exported');
   });
   toolbar.appendChild(exportCsvBtn);
 
@@ -50,6 +53,7 @@ function appendBackupToolbar(container, callbacks) {
       try {
         Store.importData(reader.result);
         renderHistoryView(container, callbacks);
+        showToast('Backup imported');
       } catch (e) {
         alert(`Could not import backup: ${e.message}`);
       }
@@ -177,7 +181,7 @@ export function renderHistoryView(container, callbacks) {
 
     const dateTd = document.createElement('td');
     dateTd.className = 'history-date';
-    dateTd.textContent = formatDateDisplay(session.date);
+    dateTd.textContent = `${formatWeekdayShort(session.date)}, ${formatDateDisplay(session.date)}`;
     row.appendChild(dateTd);
 
     [String(session.entries.length), String(totalSets)].forEach((text) => {

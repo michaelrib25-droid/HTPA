@@ -70,7 +70,7 @@ export function renderProgressView(container) {
   let metric = 'weight';
 
   const metricToggle = document.createElement('div');
-  metricToggle.className = 'metric-toggle';
+  metricToggle.className = 'toggle-group';
   const metricButtons = {};
   Object.entries(METRICS).forEach(([key, def]) => {
     const btn = document.createElement('button');

@@ -19,33 +19,81 @@ export function renderRecordsView(container) {
     return;
   }
 
-  prs.forEach((pr) => {
-    const row = document.createElement('div');
-    row.className = 'record-row';
+  const SORTS = {
+    alpha: { label: 'A–Z', apply: (list) => [...list].sort((a, b) => a.label.localeCompare(b.label)) },
+    recent: { label: 'Recently improved', apply: (list) => [...list].sort((a, b) => b.date.localeCompare(a.date)) }
+  };
+  let sortMode = 'alpha';
 
-    const icon = createIcon('records');
-    if (icon) { icon.classList.add('record-row-icon'); row.appendChild(icon); }
+  // Collapsed by default, same pattern as History's session-trends toggle —
+  // the record list itself is the tab's main job, sorting is a secondary,
+  // opt-in extra most visits don't need.
+  const filterBtn = document.createElement('button');
+  filterBtn.type = 'button';
+  filterBtn.className = 'secondary-btn trends-toggle-btn';
+  filterBtn.textContent = 'Filter';
+  container.appendChild(filterBtn);
 
-    // Name + date grouped on the left (what it is), the PR number stands
-    // out big on the right (the thing you actually scan for) — one long
-    // run-on sentence per row was hard to scan once there were several.
-    const info = document.createElement('div');
-    info.className = 'record-info';
-    const name = document.createElement('div');
-    name.className = 'record-name';
-    name.textContent = pr.label;
-    const date = document.createElement('div');
-    date.className = 'record-date';
-    date.textContent = formatDateDisplay(pr.date);
-    info.appendChild(name);
-    info.appendChild(date);
-    row.appendChild(info);
-
-    const value = document.createElement('div');
-    value.className = 'record-value';
-    value.textContent = `${pr.weight}kg × ${pr.reps}`;
-    row.appendChild(value);
-
-    container.appendChild(row);
+  const sortPanel = document.createElement('div');
+  sortPanel.className = 'toggle-group';
+  sortPanel.style.display = 'none';
+  const sortButtons = {};
+  Object.entries(SORTS).forEach(([key, def]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = key === sortMode ? 'secondary-btn active' : 'secondary-btn';
+    btn.textContent = def.label;
+    btn.addEventListener('click', () => {
+      if (sortMode === key) return;
+      sortMode = key;
+      Object.entries(sortButtons).forEach(([k, b]) => b.classList.toggle('active', k === sortMode));
+      renderList();
+    });
+    sortButtons[key] = btn;
+    sortPanel.appendChild(btn);
   });
+  container.appendChild(sortPanel);
+
+  filterBtn.addEventListener('click', () => {
+    const show = sortPanel.style.display === 'none';
+    sortPanel.style.display = show ? '' : 'none';
+    filterBtn.textContent = show ? 'Hide filter' : 'Filter';
+  });
+
+  const list = document.createElement('div');
+  container.appendChild(list);
+
+  function renderList() {
+    list.innerHTML = '';
+    SORTS[sortMode].apply(prs).forEach((pr) => {
+      const row = document.createElement('div');
+      row.className = 'record-row';
+
+      const icon = createIcon('records');
+      if (icon) { icon.classList.add('record-row-icon'); row.appendChild(icon); }
+
+      // Name + date grouped on the left (what it is), the PR number stands
+      // out big on the right (the thing you actually scan for) — one long
+      // run-on sentence per row was hard to scan once there were several.
+      const info = document.createElement('div');
+      info.className = 'record-info';
+      const name = document.createElement('div');
+      name.className = 'record-name';
+      name.textContent = pr.label;
+      const date = document.createElement('div');
+      date.className = 'record-date';
+      date.textContent = formatDateDisplay(pr.date);
+      info.appendChild(name);
+      info.appendChild(date);
+      row.appendChild(info);
+
+      const value = document.createElement('div');
+      value.className = 'record-value';
+      value.textContent = `${pr.weight}kg × ${pr.reps}`;
+      row.appendChild(value);
+
+      list.appendChild(row);
+    });
+  }
+  renderList();
 }

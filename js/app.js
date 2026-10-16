@@ -4,6 +4,7 @@ import { renderProgressView } from './progressView.js';
 import { renderRecordsView } from './recordsView.js';
 import { renderBodyweightView } from './bodyweightView.js';
 import { createIcon } from './icons.js';
+import { showToast } from './toast.js';
 
 const appRoot = document.getElementById('app');
 
@@ -18,26 +19,6 @@ const TABS = [
 let activeTab = 'log';
 let editingSession = null;
 let logDirty = false;
-
-// Appended to <body>, not #app — render() wipes #app's contents on every
-// tab switch, which would kill a toast mid-fade before the user saw it.
-let activeToast = null;
-function showToast(message) {
-  if (activeToast) activeToast.remove();
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  document.body.appendChild(toast);
-  activeToast = toast;
-  requestAnimationFrame(() => toast.classList.add('toast-visible'));
-  setTimeout(() => {
-    toast.classList.remove('toast-visible');
-    setTimeout(() => {
-      toast.remove();
-      if (activeToast === toast) activeToast = null;
-    }, 200);
-  }, 1500);
-}
 
 function render() {
   appRoot.innerHTML = '';

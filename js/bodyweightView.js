@@ -19,19 +19,39 @@ export function renderBodyweightView(container) {
   weightInput.step = '0.1';
   weightInput.min = '0';
   weightInput.placeholder = 'kg';
+  // Prefilled with the last logged weight as a starting point for today's
+  // entry — most days it's close, and it's trivially overwritten otherwise.
+  const lastEntry = Store.getLastBodyweight();
+  if (lastEntry) weightInput.value = lastEntry.weight;
   form.appendChild(weightInput);
 
   const saveBtn = document.createElement('button');
   saveBtn.className = 'save-btn';
   saveBtn.textContent = 'Save';
-  saveBtn.addEventListener('click', () => {
-    if (!weightInput.value || Number(weightInput.value) <= 0) return;
+  function save() {
+    if (!weightInput.value || Number(weightInput.value) <= 0) {
+      errorMsg.style.display = 'block';
+      return;
+    }
     Store.addBodyweight(dateInput.value, Number(weightInput.value));
     renderBodyweightView(container);
-  });
+  }
+  saveBtn.addEventListener('click', save);
   form.appendChild(saveBtn);
 
+  // Enter submits, same as the Log form's input-chain, so a weigh-in can be
+  // logged without reaching for the Save button.
+  weightInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); save(); }
+  });
+
   container.appendChild(form);
+
+  const errorMsg = document.createElement('p');
+  errorMsg.className = 'form-error';
+  errorMsg.textContent = 'Enter a valid weight before saving.';
+  errorMsg.style.display = 'none';
+  container.appendChild(errorMsg);
 
   const rawPoints = Store.getBodyweightPoints();
   const points = rawPoints.map((p) => ({

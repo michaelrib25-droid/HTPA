@@ -75,6 +75,15 @@ export function formatDateDisplay(iso) {
   return iso.replace(/-/g, '.');
 }
 
+// Built from the Y/M/D components via the *local* Date constructor, not by
+// parsing the ISO string directly — `new Date('2026-10-16')` is UTC
+// midnight, which falls on the wrong weekday once formatted back into a
+// timezone behind UTC. Same reasoning as todayIso() below.
+export function formatWeekdayShort(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: 'short' });
+}
+
 export function todayIso() {
   // Local calendar date, not toISOString()'s UTC date — otherwise a
   // late-night/early-morning entry can silently land on the wrong day
@@ -216,6 +225,14 @@ export const Store = {
     return [...prs.entries()]
       .map(([key, v]) => ({ label: labelByKey.get(key), ...v }))
       .sort((a, b) => a.label.localeCompare(b.label));
+  },
+
+  // Most-recently-added entry, so the Bodyweight form can prefill today's
+  // weight field with yesterday's (or last-logged) value — same
+  // reverse-before-sort tie-break as sessionsNewestFirst, for the case of
+  // two entries logged on the same date.
+  getLastBodyweight() {
+    return [...this.data.bodyweight].reverse().sort((a, b) => b.date.localeCompare(a.date))[0] || null;
   },
 
   getBodyweightPoints() {

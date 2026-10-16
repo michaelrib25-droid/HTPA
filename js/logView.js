@@ -245,7 +245,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
 
   if (!existingSession && Store.getMostRecentSession()) {
     repeatBtn.addEventListener('click', () => {
-      if (dirty && !confirm('Replace your current entries with last session\'s exercises?')) return;
+      if (dirty && !confirm('Replace your current entries with last session\'s exercises, duration, and caffeine?')) return;
       const lastSession = Store.getMostRecentSession();
       exerciseList.innerHTML = '';
       lastSession.entries.forEach((entry) => {
@@ -255,6 +255,12 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
           sets: last ? [{ weight: last.weight, reps: last.reps, rpe: null }] : []
         });
       });
+      // Duration/caffeine carry over too, unlike weight/reps which only
+      // prefill — this button means "repeat the whole session", and unlike
+      // RPE (always subjective to today) these are plausible starting
+      // points the user explicitly asked to reuse by clicking here.
+      durationInput.value = lastSession.durationMinutes != null ? lastSession.durationMinutes : '';
+      caffeineInput.value = lastSession.caffeineMg != null ? lastSession.caffeineMg : '';
       markDirty();
     });
     container.insertBefore(repeatBtn, dateInput);
@@ -286,7 +292,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   });
 
   const errorMsg = document.createElement('p');
-  errorMsg.className = 'log-error';
+  errorMsg.className = 'form-error';
   errorMsg.textContent = 'Add at least one exercise with a complete set (name, weight, and reps) before saving.';
   errorMsg.style.display = 'none';
   container.appendChild(errorMsg);
