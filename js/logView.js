@@ -138,6 +138,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
 
     const addSetBtn = document.createElement('button');
     addSetBtn.type = 'button';
+    addSetBtn.className = 'secondary-btn';
     addSetBtn.textContent = '+ Add set';
     addSetBtn.addEventListener('click', () => {
       addSetRow(setsContainer, null);
@@ -173,6 +174,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
 
   const addExerciseBtn = document.createElement('button');
   addExerciseBtn.type = 'button';
+  addExerciseBtn.className = 'secondary-btn';
   addExerciseBtn.textContent = '+ Add exercise';
   addExerciseBtn.addEventListener('click', () => {
     addExerciseBlock(null);

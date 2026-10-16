@@ -1,12 +1,16 @@
 import { Store, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
+import { createIcon } from './icons.js';
 
-// Maps RPE 0-10 to a blue (easier) -> red (harder) hue, so effort is visible
-// on the chart itself without a separate legend widget.
+// Maps RPE 0-10 to a gradient between the app's own accent (easier) and its
+// existing error red (harder), rather than an arbitrary blue-red hue sweep —
+// keeps the chart's effort coloring inside the app's existing 3-color palette.
+const RPE_EASY = [0x4f, 0x6d, 0xf5];
+const RPE_HARD = [0xff, 0x6b, 0x6b];
 function rpeColor(rpe) {
-  const clamped = Math.max(0, Math.min(10, rpe));
-  const hue = 220 - (clamped / 10) * 220;
-  return `hsl(${hue}, 70%, 58%)`;
+  const t = Math.max(0, Math.min(10, rpe)) / 10;
+  const [r, g, b] = RPE_EASY.map((c, i) => Math.round(c + (RPE_HARD[i] - c) * t));
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 export function renderProgressView(container) {
@@ -16,9 +20,13 @@ export function renderProgressView(container) {
   const exercises = Store.distinctExercises();
 
   if (exercises.length === 0) {
-    const empty = document.createElement('p');
+    const empty = document.createElement('div');
     empty.className = 'empty-hint';
-    empty.textContent = 'No exercises logged yet — add a session in Log.';
+    const icon = createIcon('progress');
+    if (icon) { icon.classList.add('empty-hint-icon'); empty.appendChild(icon); }
+    const text = document.createElement('p');
+    text.textContent = 'No exercises logged yet — add a session in Log.';
+    empty.appendChild(text);
     container.appendChild(empty);
     return;
   }

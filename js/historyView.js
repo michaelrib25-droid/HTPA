@@ -1,11 +1,13 @@
 import { Store, formatDateDisplay, todayIso, normalizeKey } from './store.js';
 import { renderLineChart } from './chart.js';
+import { createIcon } from './icons.js';
 
 function appendBackupToolbar(container, callbacks) {
   const toolbar = document.createElement('div');
   toolbar.className = 'backup-toolbar';
 
   const exportBtn = document.createElement('button');
+  exportBtn.className = 'secondary-btn';
   exportBtn.textContent = 'Export backup';
   exportBtn.addEventListener('click', () => {
     const json = Store.exportData();
@@ -42,6 +44,7 @@ function appendBackupToolbar(container, callbacks) {
   toolbar.appendChild(importInput);
 
   const importBtn = document.createElement('button');
+  importBtn.className = 'secondary-btn';
   importBtn.textContent = 'Import backup';
   importBtn.addEventListener('click', () => importInput.click());
   toolbar.appendChild(importBtn);
@@ -104,9 +107,13 @@ export function renderHistoryView(container, callbacks) {
   const sessions = [...Store.data.sessions].sort((a, b) => b.date.localeCompare(a.date));
 
   if (sessions.length === 0) {
-    const empty = document.createElement('p');
+    const empty = document.createElement('div');
     empty.className = 'empty-hint';
-    empty.textContent = 'No sessions logged yet — add one in Log.';
+    const icon = createIcon('history');
+    if (icon) { icon.classList.add('empty-hint-icon'); empty.appendChild(icon); }
+    const text = document.createElement('p');
+    text.textContent = 'No sessions logged yet — add one in Log.';
+    empty.appendChild(text);
     container.appendChild(empty);
     return;
   }
@@ -181,7 +188,7 @@ export function renderHistoryView(container, callbacks) {
         if (isPR) {
           const star = document.createElement('span');
           star.className = 'pr-star';
-          star.textContent = '★ PR ';
+          star.textContent = '★ PR';
           chip.appendChild(star);
         }
         chip.appendChild(document.createTextNode(`${s.weight}kg × ${s.reps}`));
@@ -199,11 +206,13 @@ export function renderHistoryView(container, callbacks) {
     });
 
     const editBtn = document.createElement('button');
+    editBtn.className = 'secondary-btn';
     editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => callbacks.onEdit(session));
     detailCell.appendChild(editBtn);
 
     const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'danger-btn';
     deleteBtn.textContent = 'Delete';
     deleteBtn.addEventListener('click', () => {
       if (!confirm(`Delete the session from ${formatDateDisplay(session.date)}? This cannot be undone.`)) return;

@@ -33,8 +33,36 @@ button.save-btn, button.active {
   background: var(--accent);
   border-color: var(--accent);
 }
+/* Secondary = outline/ghost for non-primary actions (add/export/import/edit),
+   so Save stays the one solid-fill call to action per screen. Danger = a
+   subtle red tint, just for Delete, so it reads differently from Edit at a
+   glance instead of looking like an equally safe option. */
+button.secondary-btn {
+  background: transparent;
+  border-color: #44446a;
+  color: #c3c3d6;
+}
+button.danger-btn {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
 h2 { font-size: 1.2rem; margin: 12px 0 8px; }
-.empty-hint { color: #a0a0b0; padding: 16px; text-align: center; }
+.empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #a0a0b0;
+  padding: 32px 16px;
+  text-align: center;
+}
+.empty-hint p { margin: 0; }
+.empty-hint-icon {
+  width: 36px;
+  height: 36px;
+  color: #44446a;
+  margin-bottom: 10px;
+}
 .trend-chart-svg {
   width: 100%;
   max-width: 400px;
@@ -127,9 +155,13 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   border: 1px solid var(--accent-2);
 }
 .pr-star {
+  background: rgba(45, 212, 191, 0.18);
   color: var(--accent-2);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-right: 6px;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
 }
 .history-table {
   width: 100%;
@@ -195,11 +227,20 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   width: 100%;
 }
 .record-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: #22223b;
   border-left: 3px solid var(--accent-2);
   border-radius: 8px;
   padding: 8px 12px;
   margin: 6px 0;
+}
+.record-row-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-2);
+  flex-shrink: 0;
 }
 .meta-badge {
   background: rgba(45, 212, 191, 0.15);

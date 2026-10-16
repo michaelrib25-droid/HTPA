@@ -1,5 +1,6 @@
 import { Store, todayIso, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
+import { createIcon } from './icons.js';
 
 export function renderBodyweightView(container) {
   container.innerHTML = '';
@@ -39,9 +40,13 @@ export function renderBodyweightView(container) {
   }));
 
   if (points.length === 0) {
-    const empty = document.createElement('p');
+    const empty = document.createElement('div');
     empty.className = 'empty-hint';
-    empty.textContent = 'No bodyweight entries yet.';
+    const icon = createIcon('bodyweight');
+    if (icon) { icon.classList.add('empty-hint-icon'); empty.appendChild(icon); }
+    const text = document.createElement('p');
+    text.textContent = 'No bodyweight entries yet.';
+    empty.appendChild(text);
     container.appendChild(empty);
     return;
   }
@@ -68,6 +73,7 @@ export function renderBodyweightView(container) {
       row.appendChild(label);
 
       const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'danger-btn';
       deleteBtn.textContent = 'Delete';
       deleteBtn.addEventListener('click', () => {
         if (!confirm(`Delete the bodyweight entry from ${formatDateDisplay(entry.date)} (${entry.weight}kg)?`)) return;
