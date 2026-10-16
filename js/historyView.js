@@ -69,8 +69,16 @@ function appendSessionTrends(container) {
 
   if (durationPoints.length === 0 && caffeinePoints.length === 0) return;
 
+  // Collapsed by default behind a toggle — the plain session list is the
+  // tab's main job, the trend charts are a secondary, opt-in extra.
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'secondary-btn trends-toggle-btn';
+  toggleBtn.textContent = 'Show session trends';
+  container.appendChild(toggleBtn);
+
   const trends = document.createElement('div');
   trends.className = 'session-trends';
+  trends.style.display = 'none';
 
   if (durationPoints.length > 0) {
     const caption = document.createElement('p');
@@ -95,6 +103,12 @@ function appendSessionTrends(container) {
   }
 
   container.appendChild(trends);
+
+  toggleBtn.addEventListener('click', () => {
+    const show = trends.style.display === 'none';
+    trends.style.display = show ? '' : 'none';
+    toggleBtn.textContent = show ? 'Hide session trends' : 'Show session trends';
+  });
 }
 
 export function renderHistoryView(container, callbacks) {

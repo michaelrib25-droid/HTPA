@@ -1,5 +1,18 @@
 import { Store, todayIso } from './store.js';
 
+// Colors each exercise block from the app's accent-2 (teal/green, "just
+// started") toward its error red ("deep into the session"), scaled against
+// a typical ~8-exercise session, so a glance at the block's left border
+// gives a sense of how far into the session you already are while logging.
+const PROGRESS_EARLY = [0x2d, 0xd4, 0xbf];
+const PROGRESS_LATE = [0xff, 0x6b, 0x6b];
+const TYPICAL_SESSION_LENGTH = 8;
+function sessionProgressColor(index) {
+  const t = Math.min(1, index / (TYPICAL_SESSION_LENGTH - 1));
+  const [r, g, b] = PROGRESS_EARLY.map((c, i) => Math.round(c + (PROGRESS_LATE[i] - c) * t));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function renderLogView(container, existingSession, onDone, onDirtyChange = () => {}) {
   container.innerHTML = '';
   container.className = 'log-view';
@@ -141,6 +154,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   function addExerciseBlock(prefill) {
     const block = document.createElement('div');
     block.className = 'exercise-block';
+    block.style.borderLeftColor = sessionProgressColor(exerciseList.children.length);
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';

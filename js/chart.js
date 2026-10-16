@@ -71,7 +71,10 @@ export function renderLineChart(container, points, options = {}) {
   const { min: scaleMin, max: scaleMax, ticks } = niceScale(Math.min(...values), Math.max(...values), GRID_TICKS);
   const range = scaleMax - scaleMin || 1;
 
-  const scaleX = (i) => (points.length > 1 ? PADDING_LEFT + i * xStep : PADDING_LEFT + plotWidth / 2);
+  // A single point used to be centered (xStep=0 made that the "obvious"
+  // special case), but a lone data point should still read as sitting at
+  // the start of the timeline, not floating in the middle of the axis.
+  const scaleX = (i) => PADDING_LEFT + i * xStep;
   const scaleY = (value) => PADDING_TOP + plotHeight - ((value - scaleMin) / range) * plotHeight;
 
   const coords = points.map((p, i) => ({ x: scaleX(i), y: scaleY(p.y) }));

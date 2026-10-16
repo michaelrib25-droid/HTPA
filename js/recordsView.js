@@ -22,11 +22,30 @@ export function renderRecordsView(container) {
   prs.forEach((pr) => {
     const row = document.createElement('div');
     row.className = 'record-row';
+
     const icon = createIcon('records');
     if (icon) { icon.classList.add('record-row-icon'); row.appendChild(icon); }
-    const text = document.createElement('span');
-    text.textContent = `${pr.label}: ${pr.weight}kg × ${pr.reps} (${formatDateDisplay(pr.date)})`;
-    row.appendChild(text);
+
+    // Name + date grouped on the left (what it is), the PR number stands
+    // out big on the right (the thing you actually scan for) — one long
+    // run-on sentence per row was hard to scan once there were several.
+    const info = document.createElement('div');
+    info.className = 'record-info';
+    const name = document.createElement('div');
+    name.className = 'record-name';
+    name.textContent = pr.label;
+    const date = document.createElement('div');
+    date.className = 'record-date';
+    date.textContent = formatDateDisplay(pr.date);
+    info.appendChild(name);
+    info.appendChild(date);
+    row.appendChild(info);
+
+    const value = document.createElement('div');
+    value.className = 'record-value';
+    value.textContent = `${pr.weight}kg × ${pr.reps}`;
+    row.appendChild(value);
+
     container.appendChild(row);
   });
 }

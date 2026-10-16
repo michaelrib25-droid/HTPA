@@ -179,6 +179,11 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   flex: 1;
   font-size: 0.8rem;
 }
+.trends-toggle-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+}
 .session-trends {
   margin-bottom: 16px;
 }
@@ -275,6 +280,26 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   width: 18px;
   height: 18px;
   color: var(--accent-2);
+  flex-shrink: 0;
+}
+.record-info {
+  flex: 1;
+  min-width: 0;
+}
+.record-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.record-date {
+  font-size: 0.72rem;
+  color: #a0a0b0;
+  margin-top: 2px;
+}
+.record-value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--accent-2);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 .meta-badge {
