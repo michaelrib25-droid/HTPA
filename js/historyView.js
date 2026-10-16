@@ -273,5 +273,11 @@ export function renderHistoryView(container, callbacks) {
   });
 
   table.appendChild(tbody);
-  container.appendChild(table);
+  // The table is wider than a phone screen (6 columns, several nowrap) — scope
+  // the horizontal scroll to this wrapper so it doesn't drag the whole page
+  // (tab nav included) sideways with it.
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'history-table-wrap';
+  tableWrap.appendChild(table);
+  container.appendChild(tableWrap);
 }

@@ -252,6 +252,10 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   font-weight: 700;
   font-size: 0.65rem;
 }
+.history-table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
 .history-table {
   width: 100%;
   border-collapse: collapse;
