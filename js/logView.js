@@ -34,7 +34,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
 
   const repeatBtn = document.createElement('button');
   repeatBtn.type = 'button';
-  repeatBtn.className = 'repeat-btn';
+  repeatBtn.className = 'secondary-btn repeat-btn';
   repeatBtn.textContent = '↻ Repeat last session';
 
   const dateInput = document.createElement('input');
