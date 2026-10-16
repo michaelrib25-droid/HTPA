@@ -91,7 +91,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
     rpeInput.step = '0.5';
     rpeInput.min = '0';
     rpeInput.max = '10';
-    rpeInput.placeholder = 'RPE (optional)';
+    rpeInput.placeholder = 'RPE';
     rpeInput.value = set && set.rpe != null ? set.rpe : '';
 
     const rpeWrap = document.createElement('div');
