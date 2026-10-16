@@ -136,6 +136,11 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   flex-direction: column;
   gap: 6px;
 }
+.add-set-btn {
+  align-self: flex-end;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
 .set-row {
   display: flex;
   gap: 6px;
@@ -305,8 +310,11 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
 .history-row {
   cursor: pointer;
 }
-.history-row:active {
+.history-row-alt {
   background: var(--surface);
+}
+.history-row:active {
+  background: var(--surface-raised);
 }
 .history-detail-row td {
   background: var(--surface-raised);

@@ -226,7 +226,7 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
 
     const addSetBtn = document.createElement('button');
     addSetBtn.type = 'button';
-    addSetBtn.className = 'secondary-btn';
+    addSetBtn.className = 'secondary-btn add-set-btn';
     addSetBtn.textContent = '+ Add set';
     addSetBtn.addEventListener('click', () => {
       addSetRow(setsContainer, null);

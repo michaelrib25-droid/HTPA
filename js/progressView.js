@@ -2,13 +2,18 @@ import { Store, formatDateDisplay } from './store.js';
 import { renderLineChart } from './chart.js';
 import { createIcon } from './icons.js';
 
-// Maps RPE 0-10 to a gradient between the app's own accent (easier) and its
+// Maps RPE to a gradient between the app's own accent (easier) and its
 // existing error red (harder), rather than an arbitrary blue-red hue sweep —
 // keeps the chart's effort coloring inside the app's existing 3-color palette.
+// Scaled over RPE_MIN..10, not 0..10 — logged RPE in practice is almost
+// always 6-10 (nobody logs a warmup set's RPE), so stretching the full
+// gradient across 0-10 left every real point bunched in the red end with
+// barely any visible difference between an "easy" and "hard" session.
 const RPE_EASY = [0x4f, 0x6d, 0xf5];
 const RPE_HARD = [0xff, 0x6b, 0x6b];
+const RPE_GRADIENT_MIN = 5;
 function rpeColor(rpe) {
-  const t = Math.max(0, Math.min(10, rpe)) / 10;
+  const t = Math.max(0, Math.min(10, rpe) - RPE_GRADIENT_MIN) / (10 - RPE_GRADIENT_MIN);
   const [r, g, b] = RPE_EASY.map((c, i) => Math.round(c + (RPE_HARD[i] - c) * t));
   return `rgb(${r}, ${g}, ${b})`;
 }

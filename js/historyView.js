@@ -184,11 +184,14 @@ export function renderHistoryView(container, callbacks) {
 
   const tbody = document.createElement('tbody');
 
-  sessions.forEach((session) => {
+  sessions.forEach((session, sessionIndex) => {
     const totalSets = session.entries.reduce((sum, e) => sum + e.sets.length, 0);
 
     const row = document.createElement('tr');
-    row.className = 'history-row';
+    // Zebra striping via an explicit class, not nth-child — each session
+    // also has a sibling .history-detail-row <tr>, which would throw off
+    // any odd/even selector based on child position.
+    row.className = sessionIndex % 2 === 1 ? 'history-row history-row-alt' : 'history-row';
 
     const dateTd = document.createElement('td');
     dateTd.className = 'history-date';
