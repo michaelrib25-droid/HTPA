@@ -137,11 +137,13 @@ export function renderHistoryView(container, callbacks) {
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['Date', 'Exercises', 'Sets', 'Duration (min)', 'Caffeine (mg)'].forEach((label) => {
+  ['Date', 'Exercises', 'Sets', 'Duration (min)', 'Caffeine (mg)'].forEach((label, i) => {
     const th = document.createElement('th');
     th.textContent = label;
+    if (i > 0) th.className = 'history-num';
     headRow.appendChild(th);
   });
+  headRow.appendChild(document.createElement('th')); // chevron column
   thead.appendChild(headRow);
   table.appendChild(thead);
 
@@ -158,30 +160,38 @@ export function renderHistoryView(container, callbacks) {
     const row = document.createElement('tr');
     row.className = 'history-row';
 
-    [formatDateDisplay(session.date), String(session.entries.length), String(totalSets)].forEach((text) => {
+    const dateTd = document.createElement('td');
+    dateTd.className = 'history-date';
+    dateTd.textContent = formatDateDisplay(session.date);
+    row.appendChild(dateTd);
+
+    [String(session.entries.length), String(totalSets)].forEach((text) => {
       const td = document.createElement('td');
+      td.className = 'history-num';
       td.textContent = text;
       row.appendChild(td);
     });
 
     [session.durationMinutes, session.caffeineMg].forEach((value) => {
       const td = document.createElement('td');
-      if (value != null) {
-        const badge = document.createElement('span');
-        badge.className = 'meta-badge';
-        badge.textContent = String(value);
-        td.appendChild(badge);
-      } else {
-        td.textContent = '–';
-      }
+      td.className = value != null ? 'history-num' : 'history-num history-empty-value';
+      td.textContent = value != null ? String(value) : '–';
       row.appendChild(td);
     });
+
+    const chevronTd = document.createElement('td');
+    chevronTd.className = 'history-chevron-col';
+    const chevron = document.createElement('span');
+    chevron.className = 'history-chevron';
+    chevron.textContent = '▾';
+    chevronTd.appendChild(chevron);
+    row.appendChild(chevronTd);
 
     const detailRow = document.createElement('tr');
     detailRow.className = 'history-detail-row';
     detailRow.style.display = 'none';
     const detailCell = document.createElement('td');
-    detailCell.setAttribute('colspan', '5');
+    detailCell.setAttribute('colspan', '6');
 
     session.entries.forEach((entry) => {
       const entryBlock = document.createElement('div');
@@ -238,7 +248,9 @@ export function renderHistoryView(container, callbacks) {
     detailRow.appendChild(detailCell);
 
     row.addEventListener('click', () => {
-      detailRow.style.display = detailRow.style.display === 'none' ? 'table-row' : 'none';
+      const isOpen = detailRow.style.display !== 'none';
+      detailRow.style.display = isOpen ? 'none' : 'table-row';
+      chevron.classList.toggle('open', !isOpen);
     });
 
     tbody.appendChild(row);
