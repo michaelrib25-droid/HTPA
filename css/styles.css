@@ -268,12 +268,12 @@ h2 { font-size: 1.2rem; margin: 12px 0 8px; }
   text-align: left;
   color: #a0a0b0;
   font-size: 0.75rem;
-  padding: 6px 8px;
+  padding: 6px 5px;
   border-bottom: 1px solid #333358;
   white-space: nowrap;
 }
 .history-table td {
-  padding: 8px;
+  padding: 8px 5px;
   border-bottom: 1px solid #2a2a45;
 }
 .history-date {

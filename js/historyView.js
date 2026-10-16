@@ -154,11 +154,22 @@ export function renderHistoryView(container, callbacks) {
   const table = document.createElement('table');
   table.className = 'history-table';
 
+  // Abbreviated so all 6 columns fit a phone width without horizontal
+  // scrolling — the full names are what the Log form's own labels already
+  // say, `title` just repeats them for a mouse/hover user.
+  const HEAD_COLUMNS = [
+    { label: 'Date' },
+    { label: 'Ex', title: 'Exercises' },
+    { label: 'Sets' },
+    { label: 'Min', title: 'Duration (min)' },
+    { label: 'mg', title: 'Caffeine (mg)' }
+  ];
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['Date', 'Exercises', 'Sets', 'Duration (min)', 'Caffeine (mg)'].forEach((label, i) => {
+  HEAD_COLUMNS.forEach((col, i) => {
     const th = document.createElement('th');
-    th.textContent = label;
+    th.textContent = col.label;
+    if (col.title) th.title = col.title;
     if (i > 0) th.className = 'history-num';
     headRow.appendChild(th);
   });
@@ -181,7 +192,11 @@ export function renderHistoryView(container, callbacks) {
 
     const dateTd = document.createElement('td');
     dateTd.className = 'history-date';
-    dateTd.textContent = `${formatWeekdayShort(session.date)}, ${formatDateDisplay(session.date)}`;
+    // No year here (unlike formatDateDisplay elsewhere) — this column is
+    // already the width-constrained one, and rows are chronologically
+    // sorted so the year is implicit from scroll position.
+    dateTd.textContent = `${formatWeekdayShort(session.date)} ${session.date.slice(5).replace('-', '.')}`;
+    dateTd.title = formatDateDisplay(session.date);
     row.appendChild(dateTd);
 
     [String(session.entries.length), String(totalSets)].forEach((text) => {
@@ -191,10 +206,13 @@ export function renderHistoryView(container, callbacks) {
       row.appendChild(td);
     });
 
-    [session.durationMinutes, session.caffeineMg].forEach((value) => {
+    // Unit suffixed onto the value itself (45m / 120mg) now that the header
+    // only says "Min"/"mg" — keeps the meaning without needing header text
+    // wide enough to spell out "Duration (min)".
+    [[session.durationMinutes, 'm'], [session.caffeineMg, 'mg']].forEach(([value, unit]) => {
       const td = document.createElement('td');
       td.className = value != null ? 'history-num' : 'history-num history-empty-value';
-      td.textContent = value != null ? String(value) : '–';
+      td.textContent = value != null ? `${value}${unit}` : '–';
       row.appendChild(td);
     });
 
