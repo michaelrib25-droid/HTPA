@@ -92,6 +92,30 @@ export function todayIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// Whole calendar days between two ISO dates, via local-midnight Date objects
+// (not a raw ms/86400000 divide on the strings) — same local-time reasoning
+// as todayIso(), so a date near a DST transition still comes out as an exact
+// integer day count instead of off-by-one from the hour shift. Exported
+// (like formatDateDisplay/todayIso) since views need plain date math too,
+// not just Store's persisted-data getters.
+export function daysBetweenIso(fromIso, toIso) {
+  const [fy, fm, fd] = fromIso.split('-').map(Number);
+  const [ty, tm, td] = toIso.split('-').map(Number);
+  const from = new Date(fy, fm - 1, fd);
+  const to = new Date(ty, tm - 1, td);
+  return Math.round((to - from) / 86400000);
+}
+
+// Monday of the calendar week containing this ISO date, built the same
+// local-Date way as todayIso()/formatWeekdayShort() rather than UTC math.
+function mondayOfIso(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const day = date.getDay(); // 0 = Sunday .. 6 = Saturday
+  date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export const Store = {
   data: load(),
 
@@ -163,6 +187,28 @@ export const Store = {
       points.push({ date: session.date, weight: best.weight, reps: best.reps, rpe: best.rpe, volume, e1rm });
     }
     return points.sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  // Weekly volume sums for an exercise, built from getProgressPoints() rather
+  // than re-scanning sessions — reuses the per-session volume it already
+  // computes instead of duplicating that reduce.
+  getWeeklyVolumePoints(key) {
+    const byWeek = new Map(); // weekStart (Monday) -> summed volume
+    for (const p of this.getProgressPoints(key)) {
+      const weekStart = mondayOfIso(p.date);
+      byWeek.set(weekStart, (byWeek.get(weekStart) || 0) + p.volume);
+    }
+    return [...byWeek.entries()]
+      .map(([date, volume]) => ({ date, volume }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  },
+
+  // Days since the most recent session, or null if none logged yet — for the
+  // Log tab's streak banner.
+  daysSinceLastSession() {
+    const last = this.getMostRecentSession();
+    if (!last) return null;
+    return daysBetweenIso(last.date, todayIso());
   },
 
   mostRecentlyTrainedExerciseKey() {

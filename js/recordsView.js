@@ -1,5 +1,9 @@
-import { Store, formatDateDisplay } from './store.js';
+import { Store, formatDateDisplay, daysBetweenIso, todayIso } from './store.js';
 import { createIcon } from './icons.js';
+
+// A PR this old hasn't been chased in a while — dim it instead of letting it
+// sit under the same gold "fresh achievement" accent as a PR from yesterday.
+const STALE_PR_DAYS = 60;
 
 export function renderRecordsView(container) {
   container.innerHTML = '';
@@ -66,8 +70,11 @@ export function renderRecordsView(container) {
   function renderList() {
     list.innerHTML = '';
     SORTS[sortMode].apply(prs).forEach((pr) => {
+      const daysSince = daysBetweenIso(pr.date, todayIso());
+      const stale = daysSince >= STALE_PR_DAYS;
+
       const row = document.createElement('div');
-      row.className = 'record-row';
+      row.className = stale ? 'record-row record-row-stale' : 'record-row';
 
       const icon = createIcon('records');
       if (icon) { icon.classList.add('record-row-icon'); row.appendChild(icon); }
@@ -85,6 +92,12 @@ export function renderRecordsView(container) {
       date.textContent = formatDateDisplay(pr.date);
       info.appendChild(name);
       info.appendChild(date);
+      if (stale) {
+        const staleNote = document.createElement('div');
+        staleNote.className = 'record-stale-note';
+        staleNote.textContent = `${STALE_PR_DAYS}+ days stale`;
+        info.appendChild(staleNote);
+      }
       row.appendChild(info);
 
       const value = document.createElement('div');

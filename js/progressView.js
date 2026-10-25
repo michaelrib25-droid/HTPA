@@ -49,27 +49,70 @@ export function renderProgressView(container) {
   }
   container.appendChild(select);
 
+  // Per-session metrics share one buildPoints shape (map getProgressPoints(),
+  // color dots by RPE); weeklyVolume/rpe diverge enough (different data
+  // source, or no RPE-coloring since RPE is already the plotted value) that
+  // folding them into the same value/tooltip pair would just push the
+  // special-casing into drawFor() instead of here.
+  function perSessionMetric(def) {
+    return {
+      ...def,
+      colorByRpe: true,
+      buildPoints: (key) => Store.getProgressPoints(key).map((p) => ({
+        x: p.date.slice(5).replace('-', '.'),
+        y: def.value(p),
+        tooltip: `${formatDateDisplay(p.date)} — ${def.tooltip(p)}` + (p.rpe != null ? ` @ RPE ${p.rpe}` : ''),
+        pointColor: p.rpe != null ? rpeColor(p.rpe) : undefined
+      }))
+    };
+  }
+
   const METRICS = {
-    weight: {
+    weight: perSessionMetric({
       label: 'Top set',
       unit: 'kg',
       caption: 'Heaviest set logged per session, in kg.',
       value: (p) => p.weight,
       tooltip: (p) => `top set ${p.weight}kg × ${p.reps}`
-    },
-    volume: {
+    }),
+    volume: perSessionMetric({
       label: 'Volume',
       unit: 'kg',
       caption: 'Total volume (weight × reps, summed across all sets) per session, in kg.',
       value: (p) => p.volume,
       tooltip: (p) => `volume ${p.volume}kg`
-    },
-    e1rm: {
+    }),
+    e1rm: perSessionMetric({
       label: 'Est. 1RM',
       unit: 'kg',
       caption: 'Estimated one-rep max per session (Epley formula), in kg.',
       value: (p) => p.e1rm,
       tooltip: (p) => `est. 1RM ${p.e1rm}kg (from ${p.weight}kg × ${p.reps})`
+    }),
+    weeklyVolume: {
+      label: 'Weekly Vol',
+      unit: 'kg',
+      caption: 'Total volume per calendar week (Monday–Sunday), in kg.',
+      colorByRpe: false,
+      buildPoints: (key) => Store.getWeeklyVolumePoints(key).map((p) => ({
+        x: p.date.slice(5).replace('-', '.'),
+        y: p.volume,
+        tooltip: `Week of ${formatDateDisplay(p.date)} — ${p.volume}kg total volume`
+      }))
+    },
+    rpe: {
+      label: 'RPE',
+      unit: '',
+      caption: 'Logged RPE per session (sessions without an RPE are skipped).',
+      colorByRpe: false,
+      emptyMessage: 'No RPE logged for this exercise yet.',
+      buildPoints: (key) => Store.getProgressPoints(key)
+        .filter((p) => p.rpe != null)
+        .map((p) => ({
+          x: p.date.slice(5).replace('-', '.'),
+          y: p.rpe,
+          tooltip: `${formatDateDisplay(p.date)} — RPE ${p.rpe} (${p.weight}kg × ${p.reps})`
+        }))
     }
   };
   let metric = 'weight';
@@ -102,13 +145,18 @@ export function renderProgressView(container) {
 
   function drawFor(key) {
     const def = METRICS[metric];
-    caption.textContent = `${def.caption} Point color reflects RPE when logged (blue = easier, red = harder). Hover (or tap) a point for details.`;
-    const points = Store.getProgressPoints(key).map((p) => ({
-      x: p.date.slice(5).replace('-', '.'),
-      y: def.value(p),
-      tooltip: `${formatDateDisplay(p.date)} — ${def.tooltip(p)}` + (p.rpe != null ? ` @ RPE ${p.rpe}` : ''),
-      pointColor: p.rpe != null ? rpeColor(p.rpe) : undefined
-    }));
+    caption.textContent = def.colorByRpe
+      ? `${def.caption} Point color reflects RPE when logged (blue = easier, red = harder). Hover (or tap) a point for details.`
+      : `${def.caption} Hover (or tap) a point for details.`;
+    const points = def.buildPoints(key);
+    chartContainer.innerHTML = '';
+    if (points.length === 0 && def.emptyMessage) {
+      const note = document.createElement('p');
+      note.className = 'chart-caption';
+      note.textContent = def.emptyMessage;
+      chartContainer.appendChild(note);
+      return;
+    }
     renderLineChart(chartContainer, points, { color: '#4f6df5', unit: def.unit });
   }
 

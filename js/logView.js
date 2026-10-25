@@ -1,5 +1,38 @@
 import { Store, todayIso } from './store.js';
 
+// Days-since-last-session commentary, one line per day so the tone can drift
+// from neutral to gently guilt-tripping without a formula trying to fake
+// personality. Index 0 = trained today. Capped at a single catch-all past 19
+// days — past that point the exact day count stops mattering next to the bit.
+const STREAK_MESSAGES = [
+  'Heute schon trainiert. Nicht schlecht.',
+  'Gestern warst du noch da. Passt.',
+  '2 Tage Pause. Alles im grünen Bereich.',
+  '3 Tage. Kurz nachgedacht, ob ich mir Sorgen machen soll. Noch nicht.',
+  '4 Tage. Die Hantelbank hat angefangen zu fragen.',
+  '5 Tage. Ich tu noch so, als wäre nichts.',
+  '6 Tage. Fast eine Woche. Fast.',
+  '7 Tage. Eine ganze Woche. Ich zähl jetzt offiziell mit.',
+  '8 Tage. Ich hab aufgehört, überrascht zu sein.',
+  '9 Tage. Die Matte sammelt Staub.',
+  '10 Tage. Zweistellig. Ein neues Kapitel.',
+  '11 Tage. Ich frag mich, ob du mich vergessen hast.',
+  '12 Tage. Ich hab nicht vergessen. Ich wünschte, ich hätte.',
+  '13 Tage. Unglückszahl. Passt gerade ganz gut.',
+  '14 Tage. Zwei Wochen. Ich sag nichts mehr dazu.',
+  '15 Tage. Ich bin nicht enttäuscht. Nur... still.',
+  '16 Tage. Ich hab aufgehört zu fragen, wann du wiederkommst.',
+  '17 Tage. Die Hantelbank hat einen Decknamen für dich: "der Mythos".',
+  '18 Tage. Ich erinnere mich noch schwach an dich.',
+  '19 Tage. Fast drei Wochen. Ich zähl trotzdem noch.'
+];
+
+function streakMessage(daysSinceLastSession) {
+  if (daysSinceLastSession == null) return 'Noch kein Training geloggt. Fang einfach an.';
+  if (daysSinceLastSession < STREAK_MESSAGES.length) return STREAK_MESSAGES[daysSinceLastSession];
+  return `${daysSinceLastSession} Tage. Ich hab eine Kerze für dich angezündet — neben deinem Trainingsplan, im Regal für Vermisste.`;
+}
+
 // Colors each exercise block from the app's accent-2 (teal/green, "just
 // started") toward its error red ("deep into the session"), scaled against
 // a typical ~8-exercise session, so a glance at the block's left border
@@ -31,6 +64,16 @@ export function renderLogView(container, existingSession, onDone, onDirtyChange 
   const title = document.createElement('h2');
   title.textContent = existingSession ? 'Edit Session' : 'Log Session';
   container.appendChild(title);
+
+  // Only shown while logging a new session, not while editing a past one —
+  // "days since last training" refers to today's state, not the session
+  // being edited.
+  if (!existingSession) {
+    const streak = document.createElement('p');
+    streak.className = 'streak-line';
+    streak.textContent = streakMessage(Store.daysSinceLastSession());
+    container.appendChild(streak);
+  }
 
   const repeatBtn = document.createElement('button');
   repeatBtn.type = 'button';

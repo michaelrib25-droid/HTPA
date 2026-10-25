@@ -51,6 +51,7 @@ Strict layering:
   export/import (full-data JSON backup, used by History's Export/Import buttons), and
   derived-data getters (`distinctExercises()`, `getProgressPoints()`, `getAllPRs()`,
   `getBodyweightPoints()`, `getDurationPoints()`, `getCaffeinePoints()`,
+  `getWeeklyVolumePoints()`, `daysSinceLastSession()`,
   `mostRecentlyTrainedExerciseKey()`, `getLastSetForExercise()`, `getMostRecentSession()`
   — the latter three share a private `sessionsNewestFirst()` helper that reverses
   insertion order *before* sorting by date, since `date` is day-only and a plain sort
